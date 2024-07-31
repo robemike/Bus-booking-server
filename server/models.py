@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 
@@ -67,7 +68,8 @@ class Driver(db.Model):
     password_hash = db.Column(db.String, nullable=False)
 
     buses = relationship("Bus", back_populates="driver")
-    
+
+
 
 class Admin(db.Model):
     __tablename__ = "admin"
