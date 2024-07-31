@@ -1,8 +1,7 @@
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import relationship
-from sqlalchemy.orm import validates
-
 from datetime import datetime
+
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import relationship, validates
 
 db = SQLAlchemy()
 
@@ -127,7 +126,7 @@ class Driver(db.Model):
     
 
 class Admin(db.Model):
-    
+
     __tablename__ = "admin"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
