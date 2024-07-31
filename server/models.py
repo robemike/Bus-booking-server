@@ -21,22 +21,22 @@ class Customer(db.Model):
     bookings = relationship("Booking", back_populates="customer")
 
 
-    @validates('email')
+    @validates("email")
     def validate_email(self, key, email):
-        if '@' not in email:
-            raise ValueError('Invalid email Format')
+        if "@" not in email:
+            raise ValueError("Invalid email Format")
         return email
     
-    @validates('phone_number')
+    @validates("phone_number")
     def validate_phone_number(self, key, phone_number):
         if not phone_number.isdigit() or len(phone_number) != 10:
-            raise ValueError('Phone number must be exactly 10 digits')
+            raise ValueError("Phone number must be exactly 10 digits")
         return phone_number
     
-    @validates('ID_or_Passport')
+    @validates("ID_or_Passport")
     def validate_ID_or_Passport(self, key, ID_or_Passport):
         if not ID_or_Passport.isdigit() or len(ID_or_Passport) != 9:
-            raise ValueError('ID or Passport must be exactly 9 digits')
+            raise ValueError("ID or Passport must be exactly 9 digits")
         return ID_or_Passport
     
     
@@ -56,27 +56,28 @@ class Bus(db.Model):
     bookings = relationship("Booking", back_populates="bus")
 
 
-    @validates('number_plate')
+    @validates("number_plate")
     def validate_number_plate(self, key, number_plate):
         if len(number_plate)!= 7 or not number_plate.isalpha():
-            raise ValueError('Invalid number plate format')
+            raise ValueError("Invalid number plate format")
         elif Bus.query.filter_by(number_plate = number_plate).first():
-            raise ValueError('Bus already exists')
+            raise ValueError("Bus already exists")
         return number_plate
 
 
 class Schedule(db.Model):
-    __tablename__ = 'schedules'
+
+    __tablename__ = "schedules"
     id = db.Column(db.Integer, primary_key=True)
-    bus_id = db.Column(db.Integer, db.ForeignKey('buses.id'), nullable=False)
+    bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     departure_time = db.Column(db.DateTime, nullable=False)
     arrival_time = db.Column(db.DateTime, nullable=False)
     travel_date = db.Column(db.DateTime, nullable=False)
 
-    @validates('depature_time', 'arrival_time')
+    @validates("depature_time", "arrival_time")
     def validate_time(self, departure_time, arrival_time):
         if arrival_time <= departure_time:
-            raise ValueError('Invalid: Arrival time must be after departure time')
+            raise ValueError("Invalid: Arrival time must be after departure time")
         return departure_time, arrival_time
     
 
@@ -102,26 +103,26 @@ class Driver(db.Model):
     email = db.Column(db.String, unique=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
 
-    @validates('license_number')
+    @validates("license_number")
     def validate_license_number(self, key, license_number):
         if not license_number.isdigit() or len(license_number)!= 9:
-            raise ValueError('License number must be exactly 9 digits')
+            raise ValueError("License number must be exactly 9 digits")
         return license_number
     
-    @validates('phone_number')
+    @validates("phone_number")
     def validate_phone_number(self, key, phone_number):
         if not phone_number.isdigit() or len(phone_number)!= 10:
-            raise ValueError('Phone number must be exactly 10 digits')
+            raise ValueError("Phone number must be exactly 10 digits")
         elif Driver.query.filter_by(phone_number = phone_number).first():
-            raise ValueError('Phone number must be unique')
+            raise ValueError("Phone number must be unique")
         return phone_number
     
-    @validates('email')
+    @validates("email")
     def validate_email(self, key, email):
-        if '@' not in email:
-            raise ValueError('Invalid email Format')
+        if "@" not in email:
+            raise ValueError("Invalid email Format")
         elif Driver.query.filter_by(email = email).first():
-            raise ValueError('Email already exists')
+            raise ValueError("Email already exists")
         return email
     
 
@@ -133,18 +134,18 @@ class Admin(db.Model):
     email = db.Column(db.String, unique=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
 
-    @validates('username')
+    @validates("username")
     def validate_username(self, key, username):
         if not username:
-            raise ValueError('Username is required')
+            raise ValueError("Username is required")
         elif Admin.query.filter_by(username = username).first():
-            raise ValueError('User already exists')
+            raise ValueError("User already exists")
         return username
     
-    @validates('email')
+    @validates("email")
     def validate_email(self, key, email):
-        if '@' not in email:
-            raise ValueError('Invalid email Format')
+        if "@" not in email:
+            raise ValueError("Invalid email Format")
         elif Admin.query.filter_by(email = email).first():
-            raise ValueError('Email already exists')
+            raise ValueError("Email already exists")
         return email
