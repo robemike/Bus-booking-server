@@ -1,16 +1,12 @@
 from datetime import datetime
-
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 
 db = SQLAlchemy()
 
-
 class Customer(db.Model):
-
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True)
-
     Firstname = db.Column(db.String, nullable=False)
     Lastname = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
@@ -21,9 +17,7 @@ class Customer(db.Model):
 
     bookings = relationship("Booking", back_populates="customer")
 
-
 class Bus(db.Model):
-
     __tablename__ = "buses"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
@@ -37,31 +31,26 @@ class Bus(db.Model):
     schedules = relationship("Schedule", back_populates="bus")
     bookings = relationship("Booking", back_populates="bus")
 
-
 class Schedule(db.Model):
-
     __tablename__ = "schedules"
     id = db.Column(db.Integer, primary_key=True)
-
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     departure_time = db.Column(db.DateTime, nullable=False)
     arrival_time = db.Column(db.DateTime, nullable=False)
     travel_date = db.Column(db.DateTime, nullable=False)
 
-
 class Booking(db.Model):
-
     __tablename__ = "bookings"
     id = db.Column(db.Integer, primary_key=True)
-
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     booking_date = db.Column(db.DateTime, default=datetime.utcnow)
     number_of_seats = db.Column(db.Integer, nullable=False)
 
+    customer = relationship("Customer", back_populates="bookings")
+    bus = relationship("Bus", back_populates="bookings")
 
 class Driver(db.Model):
-
     __tablename__ = "drivers"
     id = db.Column(db.Integer, primary_key=True)
     Firstname = db.Column(db.String, nullable=False)
@@ -72,13 +61,11 @@ class Driver(db.Model):
     email = db.Column(db.String, unique=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
 
+    buses = relationship("Bus", back_populates="driver")
 
 class Admin(db.Model):
-
     __tablename__ = "admin"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
-
-    
