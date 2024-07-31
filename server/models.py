@@ -5,7 +5,6 @@ from sqlalchemy.orm import relationship
 
 db = SQLAlchemy()
 
-
 class Customer(db.Model):
 
     __tablename__ = "customers"
@@ -26,7 +25,6 @@ class Bus(db.Model):
     __tablename__ = "buses"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
-    
     driver_id = db.Column(db.Integer, db.ForeignKey("drivers.id"), nullable=False)
     cost_per_seat = db.Column(db.Integer, nullable=False)
     number_of_seats = db.Column(db.Integer, nullable=False)
@@ -36,7 +34,6 @@ class Bus(db.Model):
     driver = relationship("Driver", back_populates="buses")
     schedules = relationship("Schedule", back_populates="bus")
     bookings = relationship("Booking", back_populates="bus")
-
 
 class Schedule(db.Model):
 
