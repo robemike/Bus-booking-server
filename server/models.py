@@ -5,10 +5,12 @@ from sqlalchemy.orm import relationship
 
 db = SQLAlchemy()
 
+
 class Customer(db.Model):
 
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True)
+
     Firstname = db.Column(db.String, nullable=False)
     Lastname = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
@@ -78,4 +80,3 @@ class Admin(db.Model):
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
-    
