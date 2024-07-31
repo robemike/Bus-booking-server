@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 
 db = SQLAlchemy()
 
+
 class Customer(db.Model):
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True)
@@ -16,6 +17,7 @@ class Customer(db.Model):
     ID_or_Passport = db.Column(db.Integer, unique=True, nullable=False)
 
     bookings = relationship("Booking", back_populates="customer")
+
 
 class Bus(db.Model):
     __tablename__ = "buses"
@@ -31,6 +33,7 @@ class Bus(db.Model):
     schedules = relationship("Schedule", back_populates="bus")
     bookings = relationship("Booking", back_populates="bus")
 
+
 class Schedule(db.Model):
     __tablename__ = "schedules"
     id = db.Column(db.Integer, primary_key=True)
@@ -38,6 +41,7 @@ class Schedule(db.Model):
     departure_time = db.Column(db.DateTime, nullable=False)
     arrival_time = db.Column(db.DateTime, nullable=False)
     travel_date = db.Column(db.DateTime, nullable=False)
+
 
 class Booking(db.Model):
     __tablename__ = "bookings"
@@ -49,6 +53,7 @@ class Booking(db.Model):
 
     customer = relationship("Customer", back_populates="bookings")
     bus = relationship("Bus", back_populates="bookings")
+
 
 class Driver(db.Model):
     __tablename__ = "drivers"
@@ -62,6 +67,7 @@ class Driver(db.Model):
     password_hash = db.Column(db.String, nullable=False)
 
     buses = relationship("Bus", back_populates="driver")
+    
 
 class Admin(db.Model):
     __tablename__ = "admin"
