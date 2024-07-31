@@ -8,16 +8,15 @@ class Customer(db.Model):
 
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True)
-    Firstname = db.Column(db.String, nullable=False)
-    Lastname = db.Column(db.String, nullable=False)
+    username = db.Column(db.String, unique=True, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
-    password_hash = db.Column(db.String, nullable=False)
-    address = db.Column(db.String, nullable=False)
-    phone_number = db.Column(db.Integer, nullable=False)
-    ID_or_Passport = db.Column(db.Integer, unique=True, nullable=False)
+    password = db.Column(db.String, nullable=False)
+    address = db.Column(db.String)
+    phone_number = db.Column(db.Integer)
+    ID_or_Passport = db.Column(db.Integer, unique=True)
 
 
-    bookings = relationship('Booking', back_populates='customer')
+    # bookings = relationship('Booking', back_populates='customer')
 
 
 class Bus(db.Model):
@@ -37,9 +36,9 @@ class Bus(db.Model):
 
 
 
-    driver = relationship('Driver', back_populates='buses')
-    schedules = relationship('Schedule', back_populates='bus')
-    bookings = relationship('Booking', back_populates='bus')
+    # driver = relationship('Driver', back_populates='buses')
+    # schedules = relationship('Schedule', back_populates='bus')
+    # bookings = relationship('Booking', back_populates='bus')
 
 class Schedule(db.Model):
 
@@ -82,5 +81,3 @@ class Admin(db.Model):
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
-
-
