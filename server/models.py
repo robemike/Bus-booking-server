@@ -70,7 +70,6 @@ class Driver(db.Model):
     buses = relationship("Bus", back_populates="driver")
 
 
-
 class Admin(db.Model):
     __tablename__ = "admin"
     id = db.Column(db.Integer, primary_key=True)
