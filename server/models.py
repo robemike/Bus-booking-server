@@ -80,3 +80,5 @@ class Admin(db.Model):
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
+
+    
