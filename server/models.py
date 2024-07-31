@@ -35,6 +35,7 @@ class Bus(db.Model):
     schedules = relationship("Schedule", back_populates="bus")
     bookings = relationship("Booking", back_populates="bus")
 
+
 class Schedule(db.Model):
 
     __tablename__ = "schedules"
