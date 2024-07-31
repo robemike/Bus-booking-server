@@ -48,6 +48,7 @@ class Booking(db.Model):
     booking_date = db.Column(db.DateTime, default=datetime.utcnow)
     number_of_seats = db.Column(db.Integer, nullable=False)
 
+
 class Driver(db.Model):
     __tablename__ = 'drivers'
     id = db.Column(db.Integer, primary_key=True)
