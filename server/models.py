@@ -7,7 +7,7 @@ from sqlalchemy_serializer import SerializerMixin
 db = SQLAlchemy()
 
 
-class Customer(db.Model,SerializerMixin):
+class Customer(db.Model, SerializerMixin):
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True)
     Firstname = db.Column(db.String, nullable=False)
@@ -21,7 +21,7 @@ class Customer(db.Model,SerializerMixin):
     bookings = relationship("Booking", back_populates="customer")
 
 
-class Bus(db.Model,SerializerMixin):
+class Bus(db.Model, SerializerMixin):
     __tablename__ = "buses"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
@@ -36,7 +36,7 @@ class Bus(db.Model,SerializerMixin):
     bookings = relationship("Booking", back_populates="bus")
 
 
-class Schedule(db.Model,SerializerMixin):
+class Schedule(db.Model, SerializerMixin):
     __tablename__ = "schedules"
     id = db.Column(db.Integer, primary_key=True)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
@@ -47,7 +47,7 @@ class Schedule(db.Model,SerializerMixin):
     bus= relationship("Bus", back_populates="schedules")
 
 
-class Booking(db.Model,SerializerMixin):
+class Booking(db.Model, SerializerMixin):
     __tablename__ = "bookings"
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
@@ -59,7 +59,7 @@ class Booking(db.Model,SerializerMixin):
     bus = relationship("Bus", back_populates="bookings")
 
 
-class Driver(db.Model,SerializerMixin):
+class Driver(db.Model, SerializerMixin):
     __tablename__ = "drivers"
     id = db.Column(db.Integer, primary_key=True)
     Firstname = db.Column(db.String, nullable=False)
@@ -73,7 +73,7 @@ class Driver(db.Model,SerializerMixin):
     buses = relationship("Bus", back_populates="driver")
 
 
-class Admin(db.Model,SerializerMixin):
+class Admin(db.Model, SerializerMixin):
     __tablename__ = "admins"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
