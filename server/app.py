@@ -4,9 +4,8 @@
 import random
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
-from auth import auth_bp, bcrypt, jwt
+from customer import customer_bp, bcrypt, jwt
 from datetime import timedelta
-# from flask_marshmallow import Marshmallow
 from flask import Flask
 from flask_migrate import Migrate
 
@@ -21,7 +20,7 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=1)
 app.config["SECRET_KEY"] = "JKSRVHJVFBSRDFV"+str(random.randint(1,1000000000000))
 app.json.compact = False
 
-app.register_blueprint(auth_bp)
+app.register_blueprint(customer_bp)
 
 migrate = Migrate(app, db)
 db.init_app(app)

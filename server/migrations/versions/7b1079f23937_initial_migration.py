@@ -1,8 +1,8 @@
 """initial migration
 
-Revision ID: f8efe795929a
+Revision ID: 7b1079f23937
 Revises: 
-Create Date: 2024-07-31 21:55:05.474364
+Create Date: 2024-08-01 08:05:20.478574
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'f8efe795929a'
+revision = '7b1079f23937'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -28,7 +28,8 @@ def upgrade():
     )
     op.create_table('customers',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('username', sa.String(), nullable=False),
+    sa.Column('firstname', sa.String(), nullable=False),
+    sa.Column('lastname', sa.String(), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('password', sa.String(), nullable=False),
     sa.Column('address', sa.String(), nullable=False),
@@ -36,8 +37,7 @@ def upgrade():
     sa.Column('ID_or_Passport', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('ID_or_Passport'),
-    sa.UniqueConstraint('email'),
-    sa.UniqueConstraint('username')
+    sa.UniqueConstraint('email')
     )
     op.create_table('drivers',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -53,7 +53,7 @@ def upgrade():
     )
     op.create_table('buses',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('username', sa.String(), nullable=False),
+    sa.Column('number_plate', sa.String(), nullable=False),
     sa.Column('driver_id', sa.Integer(), nullable=False),
     sa.Column('cost_per_seat', sa.Integer(), nullable=False),
     sa.Column('number_of_seats', sa.Integer(), nullable=False),
