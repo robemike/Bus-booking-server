@@ -42,6 +42,7 @@ class Schedule(db.Model):
     departure_time = db.Column(db.DateTime, nullable=False)
     arrival_time = db.Column(db.DateTime, nullable=False)
     travel_date = db.Column(db.DateTime, nullable=False)
+    bus= relationship("Bus", back_populates="schedules")
 
 
 class Booking(db.Model):
