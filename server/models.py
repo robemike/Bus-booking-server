@@ -58,9 +58,9 @@ class Bus(db.Model):
 
     @validates("number_plate")
     def validate_number_plate(self, key, number_plate):
-        if len(number_plate)!= 7 or not number_plate.isalpha():
+        if len(number_plate) != 7 or not number_plate.isalpha():
             raise ValueError("Invalid number plate format")
-        elif Bus.query.filter_by(number_plate = number_plate).first():
+        elif Bus.query.filter_by(number_plate=number_plate).first():
             raise ValueError("Bus already exists")
         return number_plate
 
@@ -111,9 +111,9 @@ class Driver(db.Model):
     
     @validates("phone_number")
     def validate_phone_number(self, key, phone_number):
-        if not phone_number.isdigit() or len(phone_number)!= 10:
+        if not phone_number.isdigit() or len(phone_number) != 10:
             raise ValueError("Phone number must be exactly 10 digits")
-        elif Driver.query.filter_by(phone_number = phone_number).first():
+        elif Driver.query.filter_by(phone_number=phone_number).first():
             raise ValueError("Phone number must be unique")
         return phone_number
     
@@ -121,7 +121,7 @@ class Driver(db.Model):
     def validate_email(self, key, email):
         if "@" not in email:
             raise ValueError("Invalid email Format")
-        elif Driver.query.filter_by(email = email).first():
+        elif Driver.query.filter_by(email=email).first():
             raise ValueError("Email already exists")
         return email
     
@@ -138,7 +138,7 @@ class Admin(db.Model):
     def validate_username(self, key, username):
         if not username:
             raise ValueError("Username is required")
-        elif Admin.query.filter_by(username = username).first():
+        elif Admin.query.filter_by(username=username).first():
             raise ValueError("User already exists")
         return username
     
@@ -146,6 +146,6 @@ class Admin(db.Model):
     def validate_email(self, key, email):
         if "@" not in email:
             raise ValueError("Invalid email Format")
-        elif Admin.query.filter_by(email = email).first():
+        elif Admin.query.filter_by(email=email).first():
             raise ValueError("Email already exists")
         return email
