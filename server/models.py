@@ -74,7 +74,7 @@ class Driver(db.Model,SerializerMixin):
 
 
 class Admin(db.Model,SerializerMixin):
-    __tablename__ = "admin"
+    __tablename__ = "admins"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
