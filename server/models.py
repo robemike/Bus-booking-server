@@ -2,11 +2,12 @@ from datetime import datetime
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
+from sqlalchemy_serializer import SerializerMixin
 
 db = SQLAlchemy()
 
 
-class Customer(db.Model):
+class Customer(db.Model,SerializerMixin):
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True)
     Firstname = db.Column(db.String, nullable=False)
@@ -20,7 +21,7 @@ class Customer(db.Model):
     bookings = relationship("Booking", back_populates="customer")
 
 
-class Bus(db.Model):
+class Bus(db.Model,SerializerMixin):
     __tablename__ = "buses"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
@@ -35,17 +36,18 @@ class Bus(db.Model):
     bookings = relationship("Booking", back_populates="bus")
 
 
-class Schedule(db.Model):
+class Schedule(db.Model,SerializerMixin):
     __tablename__ = "schedules"
     id = db.Column(db.Integer, primary_key=True)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     departure_time = db.Column(db.DateTime, nullable=False)
     arrival_time = db.Column(db.DateTime, nullable=False)
     travel_date = db.Column(db.DateTime, nullable=False)
+
     bus= relationship("Bus", back_populates="schedules")
 
 
-class Booking(db.Model):
+class Booking(db.Model,SerializerMixin):
     __tablename__ = "bookings"
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
@@ -57,7 +59,7 @@ class Booking(db.Model):
     bus = relationship("Bus", back_populates="bookings")
 
 
-class Driver(db.Model):
+class Driver(db.Model,SerializerMixin):
     __tablename__ = "drivers"
     id = db.Column(db.Integer, primary_key=True)
     Firstname = db.Column(db.String, nullable=False)
@@ -71,7 +73,7 @@ class Driver(db.Model):
     buses = relationship("Bus", back_populates="driver")
 
 
-class Admin(db.Model):
+class Admin(db.Model,SerializerMixin):
     __tablename__ = "admin"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
