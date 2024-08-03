@@ -20,19 +20,20 @@ class Customer(db.Model):
 
     # bookings = relationship("Booking", back_populates="customer")
 
-
     @validates("email")
     def validate_email(self, key, email):
         if "@" not in email:
             raise ValueError("Invalid email Format")
         return email
-    
+
+
     @validates("phone_number")
     def validate_phone_number(self, key, phone_number):
         if not phone_number.isdigit() or len(phone_number) != 10:
             raise ValueError("Phone number must be exactly 10 digits")
         return phone_number
     
+
     @validates("ID_or_Passport")
     def validate_ID_or_Passport(self, key, ID_or_Passport):
         if not ID_or_Passport.isdigit() or len(ID_or_Passport) != 9:
@@ -95,8 +96,8 @@ class Driver(db.Model):
 
     __tablename__ = "drivers"
     id = db.Column(db.Integer, primary_key=True)
-    Firstname = db.Column(db.String, nullable=False)
-    Lastname = db.Column(db.String, nullable=False)
+    firstname = db.Column(db.String, nullable=False)
+    lastname = db.Column(db.String, nullable=False)
     license_number = db.Column(db.Integer, nullable=False)
     experience_years = db.Column(db.Integer, nullable=False)
     phone_number = db.Column(db.Integer, nullable=False)
@@ -128,7 +129,7 @@ class Driver(db.Model):
 
 class Admin(db.Model):
 
-    __tablename__ = "admin"
+    __tablename__ = "admins"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)

@@ -22,7 +22,7 @@ class Signup(Resource):
         missing_fields = [field for field in required_fields if not data.get(field)]
 
         if missing_fields:
-            return {"error": f"Missing required fields: {", ".join(missing_fields)}"}, 400
+            return {"error": f"Missing required fields: {', '.join(missing_fields)}"}, 400
         
         email = data["email"]
         firstname = data["firstname"]
@@ -64,7 +64,7 @@ class Login(Resource):
         password = data.get("password")
 
         if missing_fields:
-            return {"error": f"Missing required fields: {", ".join(missing_fields)}"}, 400
+            return {"error": f"Missing required fields: {', '.join(missing_fields)}"}, 400
         
         user = Customer.query.filter_by(
             firstname=data["firstname"],
