@@ -186,3 +186,21 @@ class Admin(db.Model, SerializerMixin):
     email = db.Column(db.String, unique=True, nullable=False)
     password= db.Column(db.String, nullable=False)
   
+    password_hash = db.Column(db.String, nullable=False)
+
+    @validates("username")
+    def validate_username(self, key, username):
+        if not username:
+            raise ValueError("Username is required")
+        elif Admin.query.filter_by(username=username).first():
+            raise ValueError("User already exists")
+        return username
+    
+    
+    @validates("email")
+    def validate_email(self, key, email):
+        if "@" not in email:
+            raise ValueError("Invalid email Format")
+        elif Admin.query.filter_by(email=email).first():
+            raise ValueError("Email already exists")
+        return email
