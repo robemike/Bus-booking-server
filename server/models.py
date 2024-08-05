@@ -43,6 +43,8 @@ class Schedule(db.Model, SerializerMixin):
     departure_time = db.Column(db.DateTime, nullable=False)
     arrival_time = db.Column(db.DateTime, nullable=False)
     travel_date = db.Column(db.DateTime, nullable=False)
+    available_seats=db.Column(db.Integer, nullable=False)
+    occupied_seats=db.Column(db.Integer, nullable=False)
 
     bus= relationship("Bus", back_populates="schedules")
 
@@ -54,6 +56,9 @@ class Booking(db.Model, SerializerMixin):
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     booking_date = db.Column(db.DateTime, default=datetime.utcnow)
     number_of_seats = db.Column(db.Integer, nullable=False)
+    available_seats=db.Column(db.Integer, nullable=False)
+    occupied_seats=db.Column(db.Integer, nullable=False)
+
 
     customer = relationship("Customer", back_populates="bookings")
     bus = relationship("Bus", back_populates="bookings")
