@@ -1,12 +1,15 @@
 from datetime import datetime
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import relationship, validates
+
+from sqlalchemy_serializer import SerializerMixin
+
 
 db = SQLAlchemy()
 
 
-class Customer(db.Model):
+
+class Customer(db.Model, SerializerMixin):
 
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True)
@@ -18,7 +21,7 @@ class Customer(db.Model):
     phone_number = db.Column(db.Integer, nullable=False)
     ID_or_Passport = db.Column(db.Integer, unique=True, nullable=False)
 
-    bookings = relationship("Booking", back_populates="customer")
+  bookings = db.relationship("Booking", back_populates="customer")
 
 
     @validates("email")
@@ -39,12 +42,11 @@ class Customer(db.Model):
             raise ValueError("ID or Passport must be exactly 9 digits")
         return ID_or_Passport
     
-    
-class Bus(db.Model):
 
+class Bus(db.Model, SerializerMixin):
     __tablename__ = "buses"
     id = db.Column(db.Integer, primary_key=True)
-    number_plate = db.Column(db.String, nullable=False)
+    username = db.Column(db.String, nullable=False)
     driver_id = db.Column(db.Integer, db.ForeignKey("drivers.id"), nullable=False)
     cost_per_seat = db.Column(db.Integer, nullable=False)
     number_of_seats = db.Column(db.Integer, nullable=False)
@@ -64,15 +66,19 @@ class Bus(db.Model):
             raise ValueError("Bus already exists")
         return number_plate
 
+  
 
-class Schedule(db.Model):
-
+class Schedule(db.Model, SerializerMixin):
     __tablename__ = "schedules"
     id = db.Column(db.Integer, primary_key=True)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     departure_time = db.Column(db.DateTime, nullable=False)
     arrival_time = db.Column(db.DateTime, nullable=False)
     travel_date = db.Column(db.DateTime, nullable=False)
+    available_seats=db.Column(db.Integer, nullable=False)
+    occupied_seats=db.Column(db.Integer, nullable=False)
+
+    bus= db.relationship("Bus", back_populates="schedules")
 
     @validates("depature_time", "arrival_time")
     def validate_time(self, departure_time, arrival_time):
@@ -81,18 +87,30 @@ class Schedule(db.Model):
         return departure_time, arrival_time
     
 
-class Booking(db.Model):
-
+class Booking(db.Model, SerializerMixin):
     __tablename__ = "bookings"
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     booking_date = db.Column(db.DateTime, default=datetime.utcnow)
     number_of_seats = db.Column(db.Integer, nullable=False)
+    total_cost = db.Column(db.Float, nullable=False)
 
+    customer = db.relationship("Customer", back_populates="bookings")
+    bus = db.relationship("Bus", back_populates="bookings")
 
-class Driver(db.Model):
+    @property
+    def calculate_total_cost(self):
+        if self.bus:
+            return self.bus.cost_per_seat * self.number_of_seats
+        return 0.0
 
+    def save(self):
+        self.total_cost = self.calculate_total_cost
+        super().save()
+   
+
+class Driver(db.Model, SerializerMixin):
     __tablename__ = "drivers"
     id = db.Column(db.Integer, primary_key=True)
     Firstname = db.Column(db.String, nullable=False)
@@ -103,6 +121,9 @@ class Driver(db.Model):
     email = db.Column(db.String, unique=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
 
+    buses = db.relationship("Bus", back_populates="driver")
+
+    
     @validates("license_number")
     def validate_license_number(self, key, license_number):
         if not license_number.isdigit() or len(license_number)!= 9:
@@ -126,26 +147,14 @@ class Driver(db.Model):
         return email
     
 
-class Admin(db.Model):
 
-    __tablename__ = "admin"
+class Admin(db.Model, SerializerMixin):
+    __tablename__ = "admins"
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
 
-    @validates("username")
-    def validate_username(self, key, username):
-        if not username:
-            raise ValueError("Username is required")
-        elif Admin.query.filter_by(username=username).first():
-            raise ValueError("User already exists")
-        return username
-    
-    @validates("email")
-    def validate_email(self, key, email):
-        if "@" not in email:
-            raise ValueError("Invalid email Format")
-        elif Admin.query.filter_by(email=email).first():
-            raise ValueError("Email already exists")
-        return email
+
+ 
