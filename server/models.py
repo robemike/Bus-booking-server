@@ -73,40 +73,20 @@ class Schedule(db.Model, SerializerMixin):
     __tablename__ = "schedules"
     id = db.Column(db.Integer, primary_key=True)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
-    departure_time = db.Column(db.Time, nullable=False)
-    arrival_time = db.Column(db.Time, nullable=False)
-    travel_date = db.Column(db.Date, nullable=False)
-    available_seats = db.Column(db.Integer, nullable=False)
-    occupied_seats = db.Column(db.Integer, nullable=False)
+    departure_time = db.Column(db.DateTime, nullable=False)
+    arrival_time = db.Column(db.DateTime, nullable=False)
+    travel_date = db.Column(db.DateTime, nullable=False)
+    available_seats=db.Column(db.Integer, nullable=False)
+    occupied_seats=db.Column(db.Integer, nullable=False)
 
+    bus= db.relationship("Bus",backpopulates="schedules")
 
-    bus = db.relationship("Bus", back_populates="schedules")
-
-    @validates("arrival_time")
-    def validate_arrival_time(self, key, arrival_time):
-        if arrival_time <= self.departure_time:
-            raise ValueError("Arrival time must be after departure time")
-        return arrival_time
+    @validates("depature_time", "arrival_time")
+    def validate_time(self, departure_time, arrival_time):
+        if arrival_time <= departure_time:
+            raise ValueError("Invalid: Arrival time must be after departure time")
+        return departure_time, arrival_time
     
-    @validates('travel_date')
-    def validate_travel_date(self, key, travel_date):
-        """Validate that travel_date is not in the past."""
-        # Convert string to date if necessary
-        if isinstance(travel_date, str):
-            travel_date = datetime.strptime(travel_date, "%Y-%m-%d").date()
-        
-        if travel_date < date.today():
-            raise ValueError("Travel date cannot be in the past.")
-        return travel_date
-    
-    def validate_time_format(time_string):
-        try:
-            
-            datetime.fromisoformat(time_string)
-            return True
-        except ValueError:
-            return False
-
 
 class Booking(db.Model, SerializerMixin):
     __tablename__ = "bookings"
@@ -115,28 +95,24 @@ class Booking(db.Model, SerializerMixin):
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     booking_date = db.Column(db.Date, default=datetime.utcnow)
     number_of_seats = db.Column(db.Integer, nullable=False)
-    total_cost = db.Column(db.Float)
-    destination = db.Column(db.String, nullable=False) 
-    departure_time = db.Column(db.Time, nullable=False)
-    current_address=db.Column(db.String, nullable=False)
-    
+    total_cost = db.Column(db.Float, nullable=False)
 
     customer = db.relationship("Customer", back_populates="bookings")
-    bus = db.relationship("Bus", back_populates="bookings")
-
+    bus_id = db.relationship("Bus", back_populates="bookings")
 
     @property
     def calculate_total_cost(self):
         if self.bus:
             return self.bus.cost_per_seat * self.number_of_seats
         return 0.0
-
+    
     def save(self):
-        self.total_cost = self.calculate_total_cost  
-        db.session.add(self)
-        db.session.commit()
+        self.total_cost= self.calculate_total_cost
+        super().save()
 
-class Driver(db.Model, SerializerMixin):
+
+class Driver(db.Model):
+
     __tablename__ = "drivers"
     id = db.Column(db.Integer, primary_key=True)
     firstname = db.Column(db.String, nullable=False)
@@ -187,20 +163,3 @@ class Admin(db.Model, SerializerMixin):
     password= db.Column(db.String, nullable=False)
   
     password_hash = db.Column(db.String, nullable=False)
-
-    @validates("username")
-    def validate_username(self, key, username):
-        if not username:
-            raise ValueError("Username is required")
-        elif Admin.query.filter_by(username=username).first():
-            raise ValueError("User already exists")
-        return username
-    
-    
-    @validates("email")
-    def validate_email(self, key, email):
-        if "@" not in email:
-            raise ValueError("Invalid email Format")
-        elif Admin.query.filter_by(email=email).first():
-            raise ValueError("Email already exists")
-        return email
