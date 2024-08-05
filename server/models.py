@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import validates      
 
 db = SQLAlchemy()
 
@@ -18,7 +18,8 @@ class Customer(db.Model):
     phone_number = db.Column(db.Integer, nullable=False)
     ID_or_Passport = db.Column(db.Integer, unique=True, nullable=False)
 
-    # bookings = relationship("Booking", back_populates="customer")
+    bookings = db.relationship('Booking', back_populates='customer', cascade='all, delete-orphan')
+
 
     @validates("email")
     def validate_email(self, key, email):
@@ -52,9 +53,8 @@ class Bus(db.Model):
     route = db.Column(db.String, nullable=False)
     travel_time = db.Column(db.DateTime, nullable=False)
 
-    # driver = relationship("Driver", back_populates="buses")
-    # schedules = relationship("Schedule", back_populates="bus")
-    # bookings = relationship("Booking", back_populates="bus")
+    driver = db.relationship('Driver', back_populates='buses')
+    scheduled_buses = db.relationship('ScheduledBus', back_populates='bus', cascade='all, delete-orphan')
 
 
     @validates("number_plate")
@@ -66,14 +66,19 @@ class Bus(db.Model):
         return number_plate
 
 
-class Schedule(db.Model):
+class ScheduledBus(db.Model):
 
-    __tablename__ = "schedules"
+    __tablename__ = "scheduled_buses"
     id = db.Column(db.Integer, primary_key=True)
-    bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     departure_time = db.Column(db.DateTime, nullable=False)
     arrival_time = db.Column(db.DateTime, nullable=False)
     travel_date = db.Column(db.DateTime, nullable=False)
+    driver_id = db.Column(db.Integer, db.ForeignKey("drivers.id"), nullable=False)
+    bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
+
+    bus = db.relationship('Bus', back_populates='scheduled_buses')
+    driver = db.relationship('Driver', back_populates='scheduled_buses')
+    bookings = db.relationship('Booking', back_populates='scheduled_bus', cascade='all, delete-orphan')
 
     @validates("depature_time", "arrival_time")
     def validate_time(self, departure_time, arrival_time):
@@ -86,10 +91,14 @@ class Booking(db.Model):
 
     __tablename__ = "bookings"
     id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
-    bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     booking_date = db.Column(db.DateTime, default=datetime.utcnow)
     number_of_seats = db.Column(db.Integer, nullable=False)
+    total_cost = db.Column(db.Float, nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
+    scheduled_bus_id = db.Column(db.Integer, db.ForeignKey("scheduled_buses.id", nullable=False))
+
+    customer = db.relationship('Customer', back_populates='bookings')
+    scheduled_bus = db.relationship('ScheduledBus', back_populates='bookings')
 
 
 class Driver(db.Model):
@@ -102,7 +111,10 @@ class Driver(db.Model):
     experience_years = db.Column(db.Integer, nullable=False)
     phone_number = db.Column(db.Integer, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
-    password_hash = db.Column(db.String, nullable=False)
+    password = db.Column(db.String, nullable=False)
+
+    buses = db.relationship('Bus', back_populates='drivers', cascade='all, delete-orphan')
+    scheduled_buses = db.relationship('ScheduledBus', back_populates='driver', cascade='all, delete-orphan')
 
     @validates("license_number")
     def validate_license_number(self, key, license_number):
@@ -133,7 +145,7 @@ class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
-    password_hash = db.Column(db.String, nullable=False)
+    password = db.Column(db.String, nullable=False)
 
     @validates("username")
     def validate_username(self, key, username):
