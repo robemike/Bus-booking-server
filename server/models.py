@@ -3,6 +3,7 @@ from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 
 from sqlalchemy_serializer import SerializerMixin
+from sqlalchemy.orm import validates, relationship
 
 
 db = SQLAlchemy()
@@ -21,7 +22,7 @@ class Customer(db.Model, SerializerMixin):
     phone_number = db.Column(db.Integer, nullable=False)
     ID_or_Passport = db.Column(db.Integer, unique=True, nullable=False)
 
-  bookings = db.relationship("Booking", back_populates="customer")
+    bookings = db.relationship("Booking", back_populates="customer")
 
 
     @validates("email")
