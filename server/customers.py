@@ -5,7 +5,7 @@ from models import Driver, Customer, Admin, db
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token
 
 # Create a blueprint for authentication
-customer_bp = Blueprint("customer_bp", __name__, url_prefix="/authentication")
+customer_bp = Blueprint("customer_bp", __name__, url_prefix="/")
 bcrypt = Bcrypt()
 jwt = JWTManager()
 customer_api = Api(customer_bp)
@@ -23,7 +23,6 @@ class Signup(Resource):
             "lastname",
             "email",
             "password",
-            "address",
             "phone_number",
             "ID_or_Passport",
         ]
@@ -53,7 +52,6 @@ class Signup(Resource):
                 lastname=lastname,
                 email=email,
                 password=hashed_password,
-                address=data["address"],
                 phone_number=data["phone_number"],
                 ID_or_Passport=data["ID_or_Passport"],
             )
@@ -73,13 +71,8 @@ class Login(Resource):
             return {"error": "No input data provided."}, 400
 
         required_fields = [
-            "firstname",
-            "lastname",
             "email",
             "password",
-            "address",
-            "phone_number",
-            "ID_or_Passport",
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
@@ -91,12 +84,7 @@ class Login(Resource):
             }, 400
 
         user = Customer.query.filter_by(
-            firstname=data["firstname"],
-            lastname=data["lastname"],
             email=data["email"],
-            address=data["address"],
-            phone_number=data["phone_number"],
-            ID_or_Passport=data["ID_or_Passport"],
         ).first()
 
         if user and bcrypt.check_password_hash(user.password, password):
