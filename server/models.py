@@ -18,7 +18,7 @@ class Customer(db.Model, SerializerMixin):
     phone_number = db.Column(db.Integer, nullable=False)
     ID_or_Passport = db.Column(db.Integer, unique=True, nullable=False)
 
-    bookings = relationship("Booking", back_populates="customer")
+    bookings = db.relationship("Booking", back_populates="customer")
 
 
 class Bus(db.Model, SerializerMixin):
@@ -31,9 +31,9 @@ class Bus(db.Model, SerializerMixin):
     route = db.Column(db.String, nullable=False)
     travel_time = db.Column(db.DateTime, nullable=False)
 
-    driver = relationship("Driver", back_populates="buses")
-    schedules = relationship("Schedule", back_populates="bus")
-    bookings = relationship("Booking", back_populates="bus")
+    driver = db.relationship("Driver", back_populates="buses")
+    schedules = db.relationship("Schedule", back_populates="bus")
+    bookings = db.relationship("Booking", back_populates="bus")
 
 
 class Schedule(db.Model, SerializerMixin):
@@ -46,7 +46,7 @@ class Schedule(db.Model, SerializerMixin):
     available_seats=db.Column(db.Integer, nullable=False)
     occupied_seats=db.Column(db.Integer, nullable=False)
 
-    bus= relationship("Bus", back_populates="schedules")
+    bus= db.relationship("Bus", back_populates="schedules")
 
 
 class Booking(db.Model, SerializerMixin):
@@ -56,12 +56,21 @@ class Booking(db.Model, SerializerMixin):
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     booking_date = db.Column(db.DateTime, default=datetime.utcnow)
     number_of_seats = db.Column(db.Integer, nullable=False)
-    available_seats=db.Column(db.Integer, nullable=False)
-    occupied_seats=db.Column(db.Integer, nullable=False)
+    total_cost = db.Column(db.Float, nullable=False)
 
+    customer = db.relationship("Customer", back_populates="bookings")
+    bus = db.relationship("Bus", back_populates="bookings")
 
-    customer = relationship("Customer", back_populates="bookings")
-    bus = relationship("Bus", back_populates="bookings")
+    @property
+    def calculate_total_cost(self):
+        if self.bus:
+            return self.bus.cost_per_seat * self.number_of_seats
+        return 0.0
+
+    def save(self):
+        self.total_cost = self.calculate_total_cost
+        super().save()
+   
 
 
 class Driver(db.Model, SerializerMixin):
@@ -75,7 +84,7 @@ class Driver(db.Model, SerializerMixin):
     email = db.Column(db.String, unique=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
 
-    buses = relationship("Bus", back_populates="driver")
+    buses = db.relationship("Bus", back_populates="driver")
 
 
 class Admin(db.Model, SerializerMixin):
