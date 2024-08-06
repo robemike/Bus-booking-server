@@ -55,7 +55,7 @@ class Signup(Resource):
                 password=hashed_password,
                 address=data["address"],
                 phone_number=data["phone_number"],
-                ID_or_Passport=data["ID_or_Passport"],
+                id_or_passport=data["id_or_passport"],
             )
         except KeyError as e:
             return {"error": f"Missing required field: {e}"}, 400

@@ -1,7 +1,7 @@
 import random
 # from flask_jwt_extended import JWTManager
 from flask_cors import CORS
-from customers import customer_bp, bcrypt, jwt
+from .customers import customer_bp, bcrypt, jwt
 from datetime import timedelta
 from flask import Flask,jsonify,request
 from flask_migrate import Migrate
