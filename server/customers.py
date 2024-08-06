@@ -2,7 +2,13 @@ from flask import Blueprint, request, jsonify
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
 from models import Driver, Customer, Admin, db
-from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token
+from flask_jwt_extended import (
+    JWTManager,
+    create_access_token,
+    create_refresh_token,
+    get_jwt_identity,
+    jwt_required,
+)
 
 # Create a blueprint for authentication
 customer_bp = Blueprint("customer_bp", __name__, url_prefix="/")
@@ -89,10 +95,23 @@ class Login(Resource):
 
         if user and bcrypt.check_password_hash(user.password, password):
             access_token = create_access_token(identity=user.id)
-            return {"access_token": access_token}, 200
+            refresh_token = create_refresh_token(identity=user.id)
+            return {"access_token": access_token, "refresh_token": refresh_token}, 200
         else:
             return {"error": "Invalid login credentials"}, 401
 
 
+class RefreshToken(Resource):
+    def post(self):
+        @jwt_required(refresh=True)
+        def refresh():
+            current_user = get_jwt_identity()
+            new_access_token = create_access_token(identity=current_user)
+            return {"new_access_token": new_access_token}, 200
+
+        return refresh()
+
+
 customer_api.add_resource(Signup, "/signup")
 customer_api.add_resource(Login, "/login")
+customer_api.add_resource(RefreshToken, "/refresh")
