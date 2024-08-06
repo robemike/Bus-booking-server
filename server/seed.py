@@ -23,13 +23,13 @@ def generate_number_plate():
 def validate_number_plate(value):
     """Validates the number plate format."""
     if not re.match(r'^[A-Z]{3}[0-9]{3}$', value):
-        print(f"Invalid number plate: {value}")  # Debug print
+        print(f"Invalid number plate: {value}")  
         raise ValueError("Invalid number plate format")
     return value
 
 
 def seed_data():
-    clear_db()  # Clear the database before seeding
+    clear_db() 
     
     # Create example customers
     customers = []
@@ -39,7 +39,7 @@ def seed_data():
             firstname=fake.first_name(),
             lastname=fake.last_name(),
             email=fake.unique.email(),
-            password_hash="hashed_password",
+            password=fake.password(),
             address=fake.address(),
             phone_number=phone_number,
             id_or_passport=str(fake.unique.random_int(min=100000000, max=999999999))
@@ -59,18 +59,17 @@ def seed_data():
             experience_years=fake.random_int(min=1, max=10),
             phone_number=str(fake.random_int(min=6000000000, max=9999999999)),
             email=fake.unique.email(),
-            password_hash="hashed_password"
+            password=fake.password()
         )
         drivers.append(driver)
 
     db.session.add_all(drivers)
     db.session.commit()
 
-    # Create example buses
-    # Create example buses
+
     buses = []
-    for i in range(2):  # Create 2 buses
-        number_plate = generate_number_plate()  # Generate a number plate
+    for i in range(2):  
+        number_plate = generate_number_plate()
         validated_number_plate = validate_number_plate(number_plate)  # Validate the number plate
 
         bus = Bus(
@@ -80,8 +79,8 @@ def seed_data():
             number_of_seats=fake.random_int(min=30, max=50),
             route=fake.street_name(),
             travel_time=datetime(2024, 8, 10, 14, 0),
-            number_plate=validated_number_plate  # Use the validated number plate
-        )
+            number_plate=validated_number_plate 
+                            )
         buses.append(bus)
 
     db.session.add_all(buses)
@@ -109,7 +108,7 @@ def seed_data():
         booking = Booking(
             customer_id=customer.id,
             bus_id=buses[i % len(buses)].id,
-            number_of_seats=fake.random_int(min=1, max=3),
+            number_of_seats=fake.random_int(min=1, max=5),
             booking_date=datetime.utcnow()
         )
         bookings.append(booking)
@@ -121,14 +120,14 @@ def seed_data():
     admin = Admin(
         username="admin_user",
         email="admin@example.com",
-        password_hash="hashed_admin_password"
+        password="hashed_admin_password"
     )
 
     db.session.add(admin)
     db.session.commit()
 
 if __name__ == "__main__":
-    from app import app  # Adjust based on your app structure
+    from app import app  
     
     with app.app_context():
         seed_data()

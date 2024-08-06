@@ -11,10 +11,10 @@ class Customer(db.Model, SerializerMixin):
     firstname = db.Column(db.String, nullable=False)
     lastname = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
-    password_hash = db.Column(db.String, nullable=False)
+    password = db.Column(db.String, nullable=False)
     address = db.Column(db.String, nullable=False)
     phone_number = db.Column(db.String, nullable=False)
-    id_or_passport = db.Column(db.String, unique=True, nullable=False)  # Change to String
+    id_or_passport = db.Column(db.String, unique=True, nullable=False)
 
     bookings = db.relationship("Booking", back_populates="customer")
 
@@ -97,7 +97,7 @@ class Booking(db.Model, SerializerMixin):
         return 0.0
 
     def save(self):
-        self.total_cost = self.calculate_total_cost  # Call the property
+        self.total_cost = self.calculate_total_cost  
         db.session.add(self)
         db.session.commit()
 
@@ -106,11 +106,11 @@ class Driver(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     firstname = db.Column(db.String, nullable=False)
     lastname = db.Column(db.String, nullable=False)
-    license_number = db.Column(db.String, nullable=False)  # Change to String
+    license_number = db.Column(db.String, nullable=False)  
     experience_years = db.Column(db.Integer, nullable=False)
     phone_number = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
-    password_hash = db.Column(db.String, nullable=False)
+    password = db.Column(db.String, nullable=False)
 
     buses = db.relationship("Bus", back_populates="driver")
 
@@ -147,4 +147,4 @@ class Admin(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
-    password_hash = db.Column(db.String, nullable=False)
+    password= db.Column(db.String, nullable=False)
