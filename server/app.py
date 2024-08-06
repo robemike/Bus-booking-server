@@ -54,8 +54,8 @@ def get_scheduled_bus():
     scheduled_buses=Schedule.query.all()
     return jsonify([scheduled_bus.to_dict() for scheduled_bus in scheduled_buses]),200
 
-@app.route('/scheduled_bus/<int:bus_id>',methods=['POST'],endpoint='scheduled_bus')
-def create_scheduled_buses():
+@app.route('/scheduled_bus/<int:bus_id>',methods=['POST'],endpoint='add_scheduled_bus')
+def create_schedule_buses():
     data=request.get_json()
 
     required_fields=['departure_time','arrival_time','travel_date','available_seats','occupied_seats']

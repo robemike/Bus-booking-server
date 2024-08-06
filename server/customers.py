@@ -1,7 +1,7 @@
 from flask import Blueprint, request
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from models import Customer, db
+from .models import Customer, db
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token
 
 # Create a blueprint for authentication
