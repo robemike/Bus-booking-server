@@ -15,6 +15,7 @@ pytest = "*"
 flask-cors = "*"
 gunicorn = "*"
 psycopg2-binary = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
