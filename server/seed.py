@@ -1,6 +1,6 @@
 from datetime import datetime
-from app import db  # Replace with your actual app import
-from models import Customer, Bus, Schedule, Booking, Driver, Admin  # Adjust as necessary
+from app import db  
+from models import Customer, Bus, Schedule, Booking, Driver, Admin 
 from faker import Faker
 import re
 
@@ -17,7 +17,7 @@ def generate_number_plate():
     letters = ''.join(fake.random_choices(elements='ABCDEFGHIJKLMNOPQRSTUVWXYZ', length=3))
     numbers = ''.join(fake.random_choices(elements='0123456789', length=3))
     number_plate = f"{letters}{numbers}"
-    print(f"Generated number plate: {number_plate}")  # Debug print
+    print(f"Generated number plate: {number_plate}")  
     return number_plate
 
 def validate_number_plate(value):
@@ -31,7 +31,6 @@ def validate_number_plate(value):
 def seed_data():
     clear_db() 
     
-    # Create example customers
     customers = []
     for _ in range(5):
         phone_number = str(fake.random_int(min=6000000000, max=9999999999))
@@ -49,7 +48,6 @@ def seed_data():
     db.session.add_all(customers)
     db.session.commit()
 
-    # Create example drivers
     drivers = []
     for _ in range(2):
         driver = Driver(
@@ -70,7 +68,7 @@ def seed_data():
     buses = []
     for i in range(2):  
         number_plate = generate_number_plate()
-        validated_number_plate = validate_number_plate(number_plate)  # Validate the number plate
+        validated_number_plate = validate_number_plate(number_plate) 
 
         bus = Bus(
             username=fake.company(),
@@ -102,7 +100,7 @@ def seed_data():
     db.session.add_all(schedules)
     db.session.commit()
 
-    # Create example bookings
+
     bookings = []
     for i, customer in enumerate(customers):
         booking = Booking(
@@ -116,7 +114,7 @@ def seed_data():
     db.session.add_all(bookings)
     db.session.commit()
 
-    # Create example admin
+   
     admin = Admin(
         username="admin_user",
         email="admin@example.com",

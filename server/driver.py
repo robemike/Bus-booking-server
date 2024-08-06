@@ -9,6 +9,8 @@ bcrypt = Bcrypt()
 jwt = JWTManager()
 driver_api = Api(driver_bp)
 
+
+#Auth
 class Signup(Resource):
     def post(self):
         data = request.get_json()
@@ -83,6 +85,7 @@ class Login(Resource):
             return {
                 "error": f"Missing required fields: {', '.join(missing_fields)}"
             }, 400
+        
 
         user = Driver.query.filter_by(
             firstname=data["firstname"],
