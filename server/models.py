@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date,datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates, relationship
@@ -11,10 +11,11 @@ class Customer(db.Model, SerializerMixin):
     firstname = db.Column(db.String, nullable=False)
     lastname = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
-    password = db.Column(db.String, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
     address = db.Column(db.String, nullable=False)
     phone_number = db.Column(db.String, nullable=False)
     id_or_passport = db.Column(db.String, unique=True, nullable=False)
+    role = db.Column(db.String, default="customer")
 
     bookings = db.relationship("Booking", back_populates="customer")
 
@@ -39,6 +40,7 @@ class Customer(db.Model, SerializerMixin):
         if len(id_or_passport) != 9 or not id_or_passport.isdigit():
             raise ValueError("ID or Passport must be exactly 9 digits and numeric")
         return id_or_passport
+    
 
 class Bus(db.Model, SerializerMixin):
     __tablename__ = "buses"
@@ -49,16 +51,29 @@ class Bus(db.Model, SerializerMixin):
     number_of_seats = db.Column(db.Integer, nullable=False)
     route = db.Column(db.String, nullable=False)
     travel_time = db.Column(db.DateTime, nullable=False)
-    number_plate = db.Column(db.String, nullable=False, unique=True)
+    number_plate = db.Column(db.String,unique=True)
+    
 
-    driver = relationship("Driver", back_populates="buses")
+    driver = relationship("Driver", back_populates="buses",lazy='select')
     schedules = relationship("Schedule", back_populates="bus")
     bookings = relationship("Booking", back_populates="bus")
+    def to_dict(self):
+        # Override the to_dict method to control what gets serialized
+        return {
+            'id': self.id,
+            'username': self.username,
+            'cost_per_seat': self.cost_per_seat,
+            'number_of_seats': self.number_of_seats,
+            'route': self.route,
+            'travel_time': self.travel_time.isoformat(), 
+            'number_plate': self.number_plate,
+        }
 
     @validates("number_plate")
     def validate_number_plate(self, key, number_plate):
         if len(number_plate) != 7 or not number_plate.isalnum():
             ValueError("Invalid number plate format")
+
 
 class Schedule(db.Model, SerializerMixin):
     __tablename__ = "schedules"
@@ -66,7 +81,7 @@ class Schedule(db.Model, SerializerMixin):
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     departure_time = db.Column(db.DateTime, nullable=False)
     arrival_time = db.Column(db.DateTime, nullable=False)
-    travel_date = db.Column(db.DateTime, nullable=False)
+    travel_date = db.Column(db.Date, nullable=False)
     available_seats = db.Column(db.Integer, nullable=False)
     occupied_seats = db.Column(db.Integer, nullable=False)
 
@@ -78,17 +93,21 @@ class Schedule(db.Model, SerializerMixin):
             raise ValueError("Arrival time must be after departure time")
         return arrival_time
 
+
 class Booking(db.Model, SerializerMixin):
     __tablename__ = "bookings"
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
-    booking_date = db.Column(db.DateTime, default=datetime.utcnow)
+    booking_date = db.Column(db.Date, default=datetime.utcnow)
     number_of_seats = db.Column(db.Integer, nullable=False)
-    total_cost = db.Column(db.Float, nullable=False)
+    total_cost = db.Column(db.Float)
+    # _from=db.Column(db.String)
+    # _to=db.Column(db.String)
 
     customer = db.relationship("Customer", back_populates="bookings")
     bus = db.relationship("Bus", back_populates="bookings")
+
 
     @property
     def calculate_total_cost(self):
@@ -111,8 +130,9 @@ class Driver(db.Model, SerializerMixin):
     phone_number = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
+    role = db.Column(db.String, default="driver")
 
-    buses = db.relationship("Bus", back_populates="driver")
+    buses = db.relationship("Bus", back_populates="driver",lazy='dynamic')
 
     @validates("license_number")
     def validate_license_number(self, key, license_number):
@@ -148,3 +168,4 @@ class Admin(db.Model, SerializerMixin):
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password= db.Column(db.String, nullable=False)
+    role = db.Column(db.String, default="admin")

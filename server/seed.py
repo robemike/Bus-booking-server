@@ -1,6 +1,6 @@
-from datetime import datetime
-from app import db  
-from models import Customer, Bus, Schedule, Booking, Driver, Admin 
+from datetime import date,timedelta
+from app import db,app  
+from models import Customer, Bus, Schedule, Booking, Driver, Admin
 from faker import Faker
 import re
 
@@ -17,19 +17,18 @@ def generate_number_plate():
     letters = ''.join(fake.random_choices(elements='ABCDEFGHIJKLMNOPQRSTUVWXYZ', length=3))
     numbers = ''.join(fake.random_choices(elements='0123456789', length=3))
     number_plate = f"{letters}{numbers}"
-    print(f"Generated number plate: {number_plate}")  
+    print(f"Generated number plate: {number_plate}")
     return number_plate
 
 def validate_number_plate(value):
     """Validates the number plate format."""
     if not re.match(r'^[A-Z]{3}[0-9]{3}$', value):
-        print(f"Invalid number plate: {value}")  
+        print(f"Invalid number plate: {value}")
         raise ValueError("Invalid number plate format")
     return value
 
-
 def seed_data():
-    clear_db() 
+    clear_db()
     
     customers = []
     for _ in range(5):
@@ -40,13 +39,14 @@ def seed_data():
             email=fake.unique.email(),
             password=fake.password(),
             address=fake.address(),
-            phone_number=phone_number,
+            phone_number=fake.phone_number(),
             id_or_passport=str(fake.unique.random_int(min=100000000, max=999999999))
         )
         customers.append(customer)
 
     db.session.add_all(customers)
     db.session.commit()
+    print(f"Seeded {len(customers)} customers.")
 
     drivers = []
     for _ in range(2):
@@ -63,35 +63,40 @@ def seed_data():
 
     db.session.add_all(drivers)
     db.session.commit()
-
+    print(f"Seeded {len(drivers)} drivers.")
 
     buses = []
-    for i in range(2):  
+    for i in range(2):
         number_plate = generate_number_plate()
-        validated_number_plate = validate_number_plate(number_plate) 
+        validated_number_plate = validate_number_plate(number_plate)
+        print(f"Validated number plate: {validated_number_plate}")
+
+        # Generate a random travel date (e.g., 1 to 30 days from today)
+        travel_date = date.today() + timedelta(days=fake.random_int(min=1, max=30))
 
         bus = Bus(
             username=fake.company(),
-            driver_id=drivers[i].id,
+            driver_id=drivers[i].id,  # Ensure this driver exists in the database
             cost_per_seat=fake.random_int(min=100, max=200),
             number_of_seats=fake.random_int(min=30, max=50),
             route=fake.street_name(),
-            travel_time=datetime(2024, 8, 10, 14, 0),
-            number_plate=validated_number_plate 
-                            )
+            travel_time=travel_date,  # Set the valid travel date here
+            number_plate=validated_number_plate  
+        )
+        print(f"Creating bus with number_plate: {bus.number_plate}")
         buses.append(bus)
 
     db.session.add_all(buses)
     db.session.commit()
+    print(f"Seeded {len(buses)} buses.")
 
-    # Create example schedules
     schedules = []
     for bus in buses:
         schedule = Schedule(
             bus_id=bus.id,
-            departure_time=datetime(2024, 8, 10, 14, 30),
-            arrival_time=datetime(2024, 8, 10, 16, 30),
-            travel_date=datetime(2024, 8, 10),
+            departure_time=date(2024, 8, 10, 14, 30),
+            arrival_time=date(2024, 8, 10, 16, 30),
+            travel_date=date(2024, 8, 10),
             available_seats=bus.number_of_seats,
             occupied_seats=0
         )
@@ -99,7 +104,7 @@ def seed_data():
 
     db.session.add_all(schedules)
     db.session.commit()
-
+    print(f"Seeded {len(schedules)} schedules.")
 
     bookings = []
     for i, customer in enumerate(customers):
@@ -107,14 +112,14 @@ def seed_data():
             customer_id=customer.id,
             bus_id=buses[i % len(buses)].id,
             number_of_seats=fake.random_int(min=1, max=5),
-            booking_date=datetime.utcnow()
+            booking_date=date.utcnow()
         )
         bookings.append(booking)
 
     db.session.add_all(bookings)
     db.session.commit()
+    print(f"Seeded {len(bookings)} bookings.")
 
-   
     admin = Admin(
         username="admin_user",
         email="admin@example.com",
@@ -123,9 +128,8 @@ def seed_data():
 
     db.session.add(admin)
     db.session.commit()
+    print("Seeded admin.")
 
-if __name__ == "__main__":
-    from app import app  
-    
+if __name__== "_main_":
     with app.app_context():
         seed_data()

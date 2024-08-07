@@ -1,8 +1,8 @@
 from flask import Blueprint, request
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Customer, db
-from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token
+from models import Customer, db
+from flask_jwt_extended import JWTManager, create_access_token,jwt_required,get_jwt_identity
 
 # Create a blueprint for authentication
 customer_bp = Blueprint("customer_bp", __name__, url_prefix="/authentication")
@@ -11,6 +11,11 @@ jwt = JWTManager()
 customer_api = Api(customer_bp)
 
 
+class ProtectedResource(Resource):
+    @jwt_required()
+    def get(self):
+        current_user = get_jwt_identity() 
+        return {"message": f"Hello, user {current_user}"}
 class Signup(Resource):
     def post(self):
         data = request.get_json()
@@ -42,7 +47,7 @@ class Signup(Resource):
         ).first()
 
         if existing_customer:
-            return {"error": "User already exists."}, 400
+            return {"error": "Customer already exists."}, 400
 
         try:
             hashed_password = bcrypt.generate_password_hash(data["password"]).decode(
@@ -62,7 +67,7 @@ class Signup(Resource):
         db.session.add(new_customer)
         db.session.commit()
 
-        return {"message": "User registered successfully."}, 201
+        return {"message": "Customer registered successfully."}, 201
 
 
 class Login(Resource):

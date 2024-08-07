@@ -2,13 +2,18 @@ from flask import Blueprint, request
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
 from models import Driver, db
-from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token
+from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,jwt_required,get_jwt_identity
 
 driver_bp = Blueprint("driver_bp", __name__, url_prefix="/drivers/authentication")
 bcrypt = Bcrypt()
 jwt = JWTManager()
 driver_api = Api(driver_bp)
 
+class ProtectedResource(Resource):
+    @jwt_required()
+    def get(self):
+        current_user = get_jwt_identity()  # Get the identity of the current user
+        return {"message": f"Hello, user {current_user}"}
 
 #Auth
 class Signup(Resource):
@@ -45,7 +50,7 @@ class Signup(Resource):
         ).first()
 
         if existing_customer:
-            return {"error": "User already exists."}, 400
+            return {"error": "Driver already exists."}, 400
 
         hashed_password = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
         new_customer = Driver(
@@ -61,7 +66,7 @@ class Signup(Resource):
         db.session.add(new_customer)
         db.session.commit()
 
-        return {"message": "User registered successfully."}, 201
+        return {"message": "Driver registered successfully."}, 201
 
 class Login(Resource):
     def post(self):
@@ -101,7 +106,9 @@ class Login(Resource):
             refresh_token = create_refresh_token(identity=user.id)
             return {"access_token": access_token, "refresh_token": refresh_token}, 200
         else:
-            return {"error": "Invalid login credentials"}, 401
+            return {"error": "Invalid Driver login credentials"}, 401
 
-driver_api.add_resource(Signup, "/signup")
-driver_api.add_resource(Login, "/login")
+driver_api.add_resource(Signup, "/drivers/signup")
+driver_api.add_resource(Login, "/drivers/login")
+driver_api.add_resource(ProtectedResource, "/protected")
+
