@@ -1,13 +1,13 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, make_response
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from models import Driver, Customer, Admin, db
+from models import Driver, Customer, Admin, db, ScheduledBus
 from flask_jwt_extended import (
     JWTManager,
     create_access_token,
     create_refresh_token,
     get_jwt_identity,
-    jwt_required,
+    jwt_required
 )
 
 # Create a blueprint for authentication
@@ -110,8 +110,98 @@ class RefreshToken(Resource):
             return {"new_access_token": new_access_token}, 200
 
         return refresh()
+    
+
+class Logout(Resource):
+    @jwt_required(refresh=True)
+    def post(self):
+        jti = get_jwt_identity()
+        jwt.blacklist_token(jti)
+        return {"message": "Logged out successfully."}, 200
+    
+
+class Booking(Resource):
+    @jwt_required()
+    def post(self):
+        data = request.get_json()
+
+        if not data:
+            return {"error": "No input data provided."}, 400
+        
+        required_fields = [
+            "departure",
+            "to",
+            "number_of_seats",
+            "scheduled_bus_id",
+            "total_cost"
+        ]
+        missing_fields = [field for field in required_fields if not data.get(field)]
+
+        if missing_fields:
+            return {
+                "error": f"Missing required fields: {', '.join(missing_fields)}"
+            }, 400
+        
+        customer_id = get_jwt_identity()
+        departure = data.get('departure')
+        destination = data.get('to')
+        scheduled_bus_id = data.get('scheduled_bus_id')
+        number_of_seats = data.get('number_of_seats')
+        total_cost = data.get('total_cost')
+
+        scheduled_bus = ScheduledBus.query.get(scheduled_bus_id)
+        if not scheduled_bus:
+            return {"error": "Scheduled bus not found."}, 404
+        
+        if scheduled_bus.available_seats < number_of_seats:
+            return {"error": "Not enough seats available."}, 400
+        
+        try:
+            new_booking = Booking(
+                departure=departure,
+                to=destination,
+                customer_id=customer_id,
+                scheduled_bus_id=scheduled_bus_id,
+                number_of_seats=number_of_seats,
+                total_cost=total_cost
+            )
+            db.session.add(new_booking)
+            scheduled_bus.available_seats -= number_of_seats
+            db.session.commit()
+            return {"message": "Booking created successfully.", "booking_id": new_booking.id}, 201
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+        
+    @jwt_required()
+    def delete(self, booking_id):
+        customer_id = get_jwt_identity()
+
+        booking = Booking.query.get_or_404(booking_id)
+        if not booking:
+            return {"error": "Booking not found."}, 404
+        
+        if booking.customer_id!= customer_id:
+            return {"error": "You don't have permission to delete this booking."}, 403
+        
+        try:
+            db.session.delete(booking)
+            db.session.commit()
+            return {"message": "Booking deleted successfully."}, 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+        
+    @jwt_required()
+    def get(self):
+        customer_id = get_jwt_identity()
+
+        bookings = Booking.query.filter_by(customer_id=customer_id).all()
+        return [booking.serialize() for booking in bookings]
 
 
 customer_api.add_resource(Signup, "/signup")
 customer_api.add_resource(Login, "/login")
 customer_api.add_resource(RefreshToken, "/refresh")
+customer_api.add_resource(Logout, "/logout")
+customer_api.add_resource(Booking, "/bookings", "/bookings/<int:booking_id>")

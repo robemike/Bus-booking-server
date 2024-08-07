@@ -91,13 +91,13 @@ class ScheduledBus(db.Model):
 
 
 class Booking(db.Model):
-
     __tablename__ = "bookings"
     id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
-    booking_date = db.Column(db.DateTime, default=datetime.utcnow)
+    departure = db.Column(db.String, nullable=False) # from
+    to = db.Column(db.String, nullable=False)
     number_of_seats = db.Column(db.Integer, nullable=False)
     total_cost = db.Column(db.Float, nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
     scheduled_bus_id = db.Column(
         db.Integer, db.ForeignKey("scheduled_buses.id"), nullable=False
     )

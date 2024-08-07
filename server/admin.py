@@ -4,3 +4,8 @@ from models import Admin
 
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/admin')
 
+class ViewAllUsers(Resource):
+    def get(self):
+
+        admins 
+        pass
