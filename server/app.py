@@ -1,7 +1,7 @@
 import random
 from flask_jwt_extended import create_access_token,JWTManager
 from flask_cors import CORS
-from customers import customer_bp,bcrypt,bcrypt as customer_bcrypt
+from .customers import customer_bp,bcrypt,bcrypt as customer_bcrypt
 from driver import driver_bp,bcrypt as driver_bcrypt
 from datetime import timedelta,date,datetime
 from flask import Flask,jsonify,request
