@@ -1,7 +1,7 @@
 from flask import Blueprint, request
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from models import Driver, db
+from .models import Driver, db
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,jwt_required,get_jwt_identity
 
 driver_bp = Blueprint("driver_bp", __name__, url_prefix="/drivers/authentication")
