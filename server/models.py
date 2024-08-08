@@ -57,17 +57,7 @@ class Bus(db.Model, SerializerMixin):
     driver = relationship("Driver", back_populates="buses",lazy='select')
     schedules = relationship("Schedule", back_populates="bus")
     bookings = relationship("Booking", back_populates="bus")
-    def to_dict(self):
-        # Override the to_dict method to control what gets serialized
-        return {
-            'id': self.id,
-            'username': self.username,
-            'cost_per_seat': self.cost_per_seat,
-            'number_of_seats': self.number_of_seats,
-            'route': self.route,
-            'travel_time': self.travel_time.isoformat(), 
-            'number_plate': self.number_plate,
-        }
+   
 
     @validates("number_plate")
     def validate_number_plate(self, key, number_plate):
@@ -84,6 +74,7 @@ class Schedule(db.Model, SerializerMixin):
     travel_date = db.Column(db.Date, nullable=False)
     available_seats = db.Column(db.Integer, nullable=False)
     occupied_seats = db.Column(db.Integer, nullable=False)
+
 
     bus = db.relationship("Bus", back_populates="schedules")
 

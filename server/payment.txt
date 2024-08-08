@@ -1,0 +1,36 @@
+// PaymentButton.js
+import React from 'react';
+import axios from 'axios';
+
+const PaymentButton = () => {
+    const handlePayment = async () => {
+        const phoneNumber = prompt("Enter your phone number:"); // Get phone number from user input
+        const amount = 100; // Set the payment amount
+
+        if (phoneNumber) {
+            try {
+                const response = await axios.get('/stk_push', {
+                    params: {
+                        phone_number: phoneNumber,
+                        amount: amount
+                    }
+                });
+                console.log('Payment response:', response.data);
+                // Handle successful payment response here
+            } catch (error) {
+                console.error('Payment error:', error);
+                // Handle error response here
+            }
+        } else {
+            alert("Phone number is required!");
+        }
+    };
+
+    return (
+        <button onClick={handlePayment}>
+            Make Payment
+        </button>
+    );
+};
+
+export default PaymentButton;
