@@ -8,6 +8,7 @@ from customers import customer_bp, bcrypt, jwt
 from driver import driver_bp
 from datetime import timedelta
 from flask import Flask
+from admin import admin_bp
 from flask_migrate import Migrate
 
 from models import db
@@ -24,6 +25,7 @@ app.json.compact = False
 
 app.register_blueprint(customer_bp)
 app.register_blueprint(driver_bp)
+app.register_blueprint(admin_bp)
 
 migrate = Migrate(app, db)
 db.init_app(app)

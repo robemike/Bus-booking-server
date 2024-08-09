@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from sqlalchemy_serializer import SerializerMixin
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
 
@@ -52,8 +52,8 @@ class Bus(db.Model):
     travel_time = db.Column(db.DateTime, nullable=False)
 
     driver = db.relationship("Driver", back_populates="buses")
-    scheduled_buses = db.relationship(
-        "ScheduledBus", back_populates="bus", cascade="all, delete-orphan"
+    schedules = db.relationship(
+        "Schedule", back_populates="bus", cascade="all, delete-orphan"
     )
 
     @validates("number_plate")
@@ -65,9 +65,9 @@ class Bus(db.Model):
         return number_plate
 
 
-class ScheduledBus(db.Model):
+class Schedule(db.Model):
 
-    __tablename__ = "scheduled_buses"
+    __tablename__ = "schedules"
     id = db.Column(db.Integer, primary_key=True)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     departure_time = db.Column(db.DateTime, nullable=False)
@@ -77,10 +77,10 @@ class ScheduledBus(db.Model):
     available_seats = db.Column(db.Integer, nullable=False)
     occupied_seats = db.Column(db.Integer, nullable=False)
 
-    bus = db.relationship("Bus", back_populates="scheduled_buses")
-    driver = db.relationship("Driver", back_populates="scheduled_buses")
+    bus = db.relationship("Bus", back_populates="schedules")
+    driver = db.relationship("Driver", back_populates="schedules")
     bookings = db.relationship(
-        "Booking", back_populates="scheduled_bus", cascade="all, delete-orphan"
+        "Booking", back_populates="schedule", cascade="all, delete-orphan"
     )
 
     @validates("depature_time", "arrival_time")
@@ -98,12 +98,12 @@ class Booking(db.Model):
     number_of_seats = db.Column(db.Integer, nullable=False)
     total_cost = db.Column(db.Float, nullable=False)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
-    scheduled_bus_id = db.Column(
-        db.Integer, db.ForeignKey("scheduled_buses.id"), nullable=False
+    schedule_id = db.Column(
+        db.Integer, db.ForeignKey("schedules.id"), nullable=False
     )
 
     customer = db.relationship("Customer", back_populates="bookings")
-    scheduled_bus = db.relationship("ScheduledBus", back_populates="bookings")
+    schedule = db.relationship("Schedule", back_populates="bookings")
 
 
 class Driver(db.Model):
@@ -121,8 +121,8 @@ class Driver(db.Model):
     buses = db.relationship(
         "Bus", back_populates="driver", cascade="all, delete-orphan"
     )
-    scheduled_buses = db.relationship(
-        "ScheduledBus", back_populates="driver", cascade="all, delete-orphan"
+    schedules = db.relationship(
+        "Schedule", back_populates="driver", cascade="all, delete-orphan"
     )
 
     @validates("license_number")
@@ -148,10 +148,11 @@ class Driver(db.Model):
         return email
 
 
-class Admin(db.Model):
+class Admin(db.Model, SerializerMixin):
 
     __tablename__ = "admins"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
+    role = db.Column(db.String, default='admin')
