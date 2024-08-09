@@ -18,7 +18,6 @@ class Customer(db.Model, SerializerMixin):
     lastname = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
-    address = db.Column(db.String, nullable=False)
     phone_number = db.Column(db.String, nullable=False)
     id_or_passport = db.Column(db.String, unique=True, nullable=False)
     role = db.Column(db.String, default="customer")
@@ -57,7 +56,7 @@ class Bus(db.Model, SerializerMixin):
     number_of_seats = db.Column(db.Integer, nullable=False)
     route = db.Column(db.String, nullable=False)
     travel_time = db.Column(db.DateTime, nullable=False)
-    number_plate = db.Column(db.String,unique=True)
+    number_plate = db.Column(db.String,unique=True, nullable=False)
     
 
     driver = relationship("Driver", back_populates="buses",lazy='select')

@@ -18,8 +18,8 @@ from models import db,Bus,Schedule,Customer,Booking,Driver
 
 app = Flask(__name__)
 CORS(app)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URI')
-# app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///bus_booking.db'
+# app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URI')
+app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///bus_booking.db'
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "fsbdgfnhgvjnvhmvh"+str(
     random.randint(1,1000000000000))

@@ -17,6 +17,8 @@ gunicorn = "*"
 psycopg2-binary = "*"
 python-dotenv = "*"
 faker = "*"
+flask-swagger-ui = "*"
+requests = "*"
 
 [dev-packages]
 

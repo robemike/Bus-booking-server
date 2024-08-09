@@ -30,7 +30,7 @@ class Signup(Resource):
             "email",
             "password",
             "phone_number",
-            "ID_or_Passport",
+            "id_or_passport",
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
@@ -59,7 +59,7 @@ class Signup(Resource):
                 email=email,
                 password=hashed_password,
                 phone_number=data["phone_number"],
-                ID_or_Passport=data["ID_or_Passport"],
+                id_or_passport=data["id_or_passport"],
             )
         except KeyError as e:
             return {"error": f"Missing required field: {e}"}, 400

@@ -197,20 +197,22 @@ class RegisterBus(Resource):
         driver = Driver.query.get(current_driver_id)
 
         if not driver:
-            return jsonify({"error": "Driver not found."}), 404
+            return {"error": "Driver not found."}, 404
 
         data = request.get_json()
         required_fields = ['username', 'cost_per_seat', 'number_of_seats', 'route', 'travel_time', 'number_plate']
 
         missing_fields = [field for field in required_fields if field not in data]
+        number_plate = data["number_plate"]
+
         if missing_fields:
-            return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+            return {"error": f"Missing required fields: {', '.join(missing_fields)}"}, 400
 
         # Convert travel_time to a date object if it's a string
         try:
             travel_time = date.fromisoformat(data['travel_time'])  # Ensure it's a valid ISO format (YYYY-MM-DD)
         except ValueError:
-            return jsonify({"error": "Invalid travel_time format. Use YYYY-MM-DD."}), 400
+            return {"error": "Invalid travel_time format. Use YYYY-MM-DD."}, 400
 
         new_bus = Bus(
             username=data['username'],
@@ -219,13 +221,12 @@ class RegisterBus(Resource):
             number_of_seats=data['number_of_seats'],
             route=data['route'],
             travel_time=travel_time,
-            number_plate=data['number_plate']
+            number_plate=number_plate
         )
-
         db.session.add(new_bus)
         db.session.commit()
 
-        return jsonify({"message": "Bus registered successfully."}), 201
+        return {"message": "Bus registered successfully."}, 201
     
 #Update the Bus Price per seat
 class UpdateBusCost(Resource):
