@@ -1,13 +1,21 @@
+from datetime import datetime
+from sqlalchemy_serializer import SerializerMixin
 from datetime import date,datetime
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import validates
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates, relationship
 
 db = SQLAlchemy()
 
+
+class Customer(db.Model, SerializerMixin):
+
 class Customer(db.Model, SerializerMixin):
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True)
+    firstname = db.Column(db.String, nullable=False)
+    lastname = db.Column(db.String, nullable=False)
     firstname = db.Column(db.String, nullable=False)
     lastname = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
@@ -68,6 +76,7 @@ class Bus(db.Model, SerializerMixin):
 class Schedule(db.Model, SerializerMixin):
     __tablename__ = "schedules"
     id = db.Column(db.Integer, primary_key=True)
+    bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     departure_time = db.Column(db.DateTime, nullable=False)
     arrival_time = db.Column(db.DateTime, nullable=False)
