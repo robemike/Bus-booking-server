@@ -2,10 +2,10 @@ from flask import Blueprint, request
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
 from models import Customer, db,Schedule
-from flask_jwt_extended import JWTManager, create_access_token,jwt_required,get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token,jwt_required,get_jwt_identity,create_refresh_token
 
-# Create a blueprint for authentication
-customer_bp = Blueprint("customer_bp", __name__, url_prefix="/authentication")
+#Blueprint for authentication
+customer_bp = Blueprint("customer_bp", __name__, url_prefix="/customer")
 bcrypt = Bcrypt()
 jwt = JWTManager()
 customer_api = Api(customer_bp)
@@ -79,13 +79,8 @@ class Login(Resource):
             return {"error": "No input data provided."}, 400
 
         required_fields = [
-            "firstname",
-            "lastname",
             "email",
-            "password",
-            "address",
-            "phone_number",
-            "id_or_passport",
+            "password"
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
@@ -97,36 +92,27 @@ class Login(Resource):
             }, 400
 
         user = Customer.query.filter_by(
-            firstname=data["firstname"],
-            lastname=data["lastname"],
             email=data["email"],
-            address=data["address"],
-            phone_number=data["phone_number"],
-            id_or_passport=data["id_or_passport"],
+           
         ).first()
 
         if user and bcrypt.check_password_hash(user.password, password):
             access_token = create_access_token(identity=user.id)
-            return {"access_token": access_token}, 200
+            refresh_token = create_refresh_token(identity=user.id)
+            return {"access_token": access_token, "refresh_token": refresh_token}, 200
         else:
             return {"error": "Invalid login credentials"}, 401
         
-class RefreshToken(Resource):
-    def post(self):
-        @jwt_required(refresh=True)
-        def refresh():
-            current_user = get_jwt_identity()
-            new_access_token = create_access_token(identity=current_user)
-            return {"new_access_token": new_access_token}, 200
+# class RefreshToken(Resource):
+#     def post(self):
+#         @jwt_required(refresh=True)
+#         def refresh():
+#             current_user = get_jwt_identity()
+#             new_access_token = create_access_token(identity=current_user)
+#             return {"new_access_token": new_access_token}, 200
 
-        return refresh()
+#         return refresh()
 
-class Logout(Resource):
-    @jwt_required(refresh=True)
-    def post(self):
-        jti = get_jwt_identity()
-        jwt.blacklist_token(jti)
-        return {"message": "Logged out successfully."}, 200
     
 class Booking(Resource):
     @jwt_required()
@@ -210,6 +196,4 @@ class Booking(Resource):
 
 customer_api.add_resource(Signup, "/signup")
 customer_api.add_resource(Login, "/login")
-customer_api.add_resource(RefreshToken, "/refresh")
-customer_api.add_resource(Logout, "/logout")
 customer_api.add_resource(Booking, "/bookings", "/bookings/<int:booking_id>")

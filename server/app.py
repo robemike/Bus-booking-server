@@ -1,5 +1,5 @@
 import random
-from flask_jwt_extended import create_access_token,JWTManager
+from flask_jwt_extended import JWTManager,get_jwt,jwt_required
 from flask_cors import CORS
 from customers import customer_bp,bcrypt as customer_bcrypt
 from driver import driver_bp,bcrypt as driver_bcrypt
@@ -11,8 +11,10 @@ from datetime import date
 import os
 from dotenv import load_dotenv
 load_dotenv()
-
+from flask_swagger_ui import get_swaggerui_blueprint
 from models import db,Bus,Schedule,Customer,Booking
+
+
 
 app = Flask(__name__)
 CORS(app)
@@ -23,8 +25,41 @@ app.config["JWT_SECRET_KEY"] = "fsbdgfnhgvjnvhmvh"+str(
     random.randint(1,1000000000000))
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=1)
 app.config["SECRET_KEY"] = "JKSRVHJVFBSRDFV"+str(random.randint(1,1000000000000))
+app.config["JWT_BLACKLIST_ENABLED"] = True
+app.config["JWT_BLACKLIST_TOKEN_CHECKS"] = ["access", "refresh"] 
 app.json.compact = False
+jwt = JWTManager(app)
 
+# Logout
+BLACKLIST = set()
+@jwt.token_in_blocklist_loader
+def check_if_token_in_blocklist(jwt_header, decrypted_token):
+    return decrypted_token['jti'] in BLACKLIST
+
+@app.route("/logout", methods=["POST"])
+@jwt_required(refresh=True)
+def logout():
+    jti = get_jwt()["jti"]
+    BLACKLIST.add(jti)
+    return jsonify({"success":"Successfully logged out"}), 200
+
+SWAGGER_URL = '/swagger'  
+API_URL = '.static/swagger.json' 
+
+
+# Call factory function to create our blueprint
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,  
+    API_URL,
+    config={  
+        'app_name': "Test application"
+    }
+)
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
+
+@app.route('/swagger', strict_slashes=False)
+def swagger_view():
+    return app.send_static_file('swagger.json')
 
 
 migrate = Migrate(app, db)
@@ -32,7 +67,6 @@ db.init_app(app)
 customer_bcrypt.init_app(app)  
 driver_bcrypt.init_app(app)
 jwt = JWTManager(app)
-
 
 
 # Register blueprints
@@ -44,7 +78,7 @@ app.register_blueprint(driver_bp)
 @app.route('/stk_push', methods=['GET'])
 def stk_push():
     # Retrieve parameters from the request
-    phone_number = request.args.get('phone_number')  # Get phone number from query parameter
+    phone_number = request.args.get('phone_number') 
     if not phone_number:
         return jsonify({"error": "Phone number is required"}), 400
 
