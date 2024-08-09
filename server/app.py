@@ -1,8 +1,8 @@
 import random
-from flask_jwt_extended import JWTManager,get_jwt,jwt_required
+from flask_jwt_extended import JWTManager,get_jwt,jwt_required,get_jwt_identity
 from flask_cors import CORS
-from .customers import customer_bp,bcrypt as customer_bcrypt
-from .driver import driver_bp,bcrypt as driver_bcrypt
+from customers import customer_bp,bcrypt as customer_bcrypt
+from driver import driver_bp,bcrypt as driver_bcrypt
 from datetime import timedelta,date,datetime
 from flask import Flask,jsonify,request
 from flask_migrate import Migrate
@@ -12,7 +12,8 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 from flask_swagger_ui import get_swaggerui_blueprint
-from .models import db,Bus,Schedule,Customer,Booking,Driver
+from models import db,Bus,Schedule,Customer,Booking,Driver
+from flask_restful import Api
 
 app = Flask(__name__)
 
@@ -47,6 +48,7 @@ app.config["JWT_BLACKLIST_ENABLED"] = True
 app.config["JWT_BLACKLIST_TOKEN_CHECKS"] = ["access", "refresh"] 
 app.json.compact = False
 jwt = JWTManager(app)
+driver_api = Api(driver_bp)
 
 # Logout
 BLACKLIST = set()
@@ -157,6 +159,23 @@ def get_buses():
         'travel_time': bus.travel_time.isoformat(), 
         'number_plate': bus.number_plate,
     } for bus in buses]), 200
+
+@app.route('/buses/<int:bus_id>', methods=['GET'], endpoint='view_buses_by_id')
+def get_buses_by_id(bus_id):
+    bus = Bus.query.filter_by(id=bus_id).first()  
+
+    if not bus:
+        return jsonify({"message": "No buses found."}), 404
+
+    return jsonify({
+        'id': bus.id,
+        'username': bus.username,
+        'cost_per_seat': bus.cost_per_seat,
+        'number_of_seats': bus.number_of_seats,
+        'route': bus.route,
+        'travel_time': bus.travel_time.isoformat(),
+        'number_plate': bus.number_plate,
+    }), 200
 
 
 # Get buses by driver
@@ -292,7 +311,6 @@ def update_schedule(bus_id):
         return jsonify({'message': 'Schedule not found'}), 404
     
 #Tickets
-
 @app.route('/tickets', methods=['GET'],endpoint='view_tickets')
 def get_tickets():
     tickets=Booking.query.all()
@@ -306,9 +324,11 @@ def get_tickets():
             
         } for ticket in tickets]),200
 
+
 @app.route('/tickets/<int:ticket_id>', methods=['GET'], endpoint='view_tickets_by_id')
 def get_ticket_by_id(ticket_id):
-    # Fetch the ticket based on the provided ticket_id
+  
+  
     ticket = Booking.query.get(ticket_id)
     
     if not ticket:
@@ -317,12 +337,113 @@ def get_ticket_by_id(ticket_id):
     return jsonify({
         'id': ticket.id,
         'username': ticket.username,
-        'booking_date': ticket.booking_date.isoformat(),  # Ensure this is formatted correctly
+        'booking_date': ticket.booking_date.isoformat(),  
         'number_of_seats': ticket.number_of_seats,
         'route': ticket.route,
         'total_cost': ticket.total_cost
     }), 200
 
+
+
+#Update the Bus Price per seat
+@app.route("/drivers/auth/buses/<int:bus_id>/cost", methods=["GET"])
+@jwt_required()  # Require JWT for this route
+def get_bus_cost(bus_id):
+    """Get the cost per seat of a bus
+    ---
+    parameters:
+      - name: bus_id
+        in: path
+        required: true
+        type: integer
+    responses:
+      200:
+        description: Cost per seat retrieved successfully
+      404:
+        description: Bus not found
+    """
+    current_driver_id = get_jwt_identity()  
+    bus = Bus.query.filter_by(id=bus_id, driver_id=current_driver_id).first()  
+
+    if not bus:
+        return jsonify({"error": "Bus not found."}), 404
+    
+    return jsonify({
+        'id': bus.id,
+        'username': bus.username,
+        'cost_per_seat': bus.cost_per_seat,
+        'number_of_seats': bus.number_of_seats,
+        'route': bus.route,
+        'travel_time': bus.travel_time.isoformat(),
+        'number_plate': bus.number_plate,
+    }), 200
+
+@app.route("/drivers/auth/buses/cost", methods=["POST"])
+@jwt_required()  
+def add_bus_cost():
+    """Add a new bus with its cost per seat
+    ---
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            username:
+              type: string
+            cost_per_seat:
+              type: number
+            number_of_seats:
+              type: integer
+            route:
+              type: string
+            travel_time:
+              type: string
+              format: date-time  # Ensure proper date-time format
+            number_plate:
+              type: string
+    responses:
+      201:
+        description: Bus created successfully
+      400:
+        description: Error with missing fields or invalid data
+    """
+    current_driver_id = get_jwt_identity()  
+    print(f"Current Driver ID: {current_driver_id}")  
+
+    if current_driver_id is None:
+        return jsonify({"error": "Driver not authenticated."}), 403  
+
+    data = request.get_json()
+
+    required_fields = ['username', 'cost_per_seat', 'number_of_seats', 'route', 'travel_time', 'number_plate']
+    missing_fields = [field for field in required_fields if field not in data]
+
+    if missing_fields:
+        return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+
+    try:
+        new_bus = Bus(
+            username=data['username'],
+            cost_per_seat=float(data['cost_per_seat']),
+            number_of_seats=data['number_of_seats'],
+            route=data['route'],
+            travel_time=data['travel_time'],  
+            number_plate=data['number_plate'],
+            driver_id=current_driver_id  
+        )
+        
+        db.session.add(new_bus)
+        db.session.commit()
+
+    except ValueError as ve:
+        return jsonify({"error": "Invalid data provided.", "details": str(ve)}), 400
+    except Exception as e:
+        db.session.rollback()  
+        return jsonify({"error": "Failed to create bus.", "details": str(e)}), 500
+
+    return jsonify({"message": "Bus created successfully.", "bus_id": new_bus.id}), 201
 
 
 if __name__ == "__main__":

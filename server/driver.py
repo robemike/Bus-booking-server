@@ -1,12 +1,13 @@
 from flask import Blueprint, request,jsonify
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Driver, db,Bus,Schedule
+from models import Driver, db,Bus,Schedule
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,jwt_required,get_jwt_identity
 # from flask_swagger_ui import get_swaggerui_blueprint
-from datetime import date
+from datetime import date,time,datetime
 
-driver_bp = Blueprint("driver_bp", __name__, url_prefix="/drivers")
+
+driver_bp = Blueprint("driver_bp", __name__, url_prefix="/drivers/auth")
 bcrypt = Bcrypt()
 jwt = JWTManager()
 driver_api = Api(driver_bp)
@@ -24,7 +25,7 @@ class ProtectedResource(Resource):
             description: Unauthorized
         """
         current_user = get_jwt_identity()  
-        return {"message": f"Hello, user {current_user}"}
+        return {"message": f"Hello, Driver, your ID is {current_user}"}
 
 #Auth
 class Signup(Resource):
@@ -39,8 +40,7 @@ class Signup(Resource):
               type: object
               properties:
                 firstname:
-                  type: s
-                  tring
+                  type: string
                 lastname:
                   type: string
                 license_number:
@@ -62,7 +62,7 @@ class Signup(Resource):
         data = request.get_json()
 
         if not data:
-            return {"error": "No input data provided."}, 400
+            return jsonify({"error": "No input data provided."}), 400
 
         required_fields = [
             "firstname",
@@ -73,42 +73,44 @@ class Signup(Resource):
             "email",
             "password",
         ]
-        missing_fields = [field for field in required_fields if not data.get(field)]
+        missing_fields = [field for field in required_fields if field not in data or not data[field]]
 
         if missing_fields:
-            return {
+            return jsonify({
                 "error": f"Missing required fields: {', '.join(missing_fields)}"
-            }, 400
+            }), 400
 
         email = data["email"]
-        firstname = data["firstname"]
-        lastname = data["lastname"]
         license_number = data["license_number"]
-        experience_years = data["experience_years"]
 
         existing_driver = Driver.query.filter_by(
-            firstname=firstname, lastname=lastname, email=email
+            email=email,
+            license_number=license_number,
         ).first()
 
         if existing_driver:
-            return {"error": "Driver already exists."}, 400
+            return jsonify({"error": "Driver already exists."}), 400
 
         try:
-            hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+            hashed_password = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
             new_driver = Driver(
-                firstname=firstname,
-                lastname=lastname,
+                firstname=data["firstname"],
+                lastname=data["lastname"],
                 email=email,
                 password=hashed_password,
                 phone_number=data["phone_number"],
-                license_number=data["license_number"],
+                license_number=license_number,
                 experience_years=data["experience_years"],
             )
-        except KeyError as e:
-            return {"error": f"Missing required field: {e}"}, 400
-        db.session.add(new_driver)
-        db.session.commit()
-        return {"success": "Driver registered successfully"}, 201
+            db.session.add(new_driver)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": str(e)}), 400
+
+        return jsonify({"success": "Driver registered successfully"}), 201
+
+
     
 class Login(Resource):
     def post(self):
@@ -206,9 +208,9 @@ class RegisterBus(Resource):
         if missing_fields:
             return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
 
-        # Convert travel_time to a date object if it's a string
+
         try:
-            travel_time = date.fromisoformat(data['travel_time'])  # Ensure it's a valid ISO format (YYYY-MM-DD)
+            travel_time = time.fromisoformat(data['travel_time'])  
         except ValueError:
             return jsonify({"error": "Invalid travel_time format. Use YYYY-MM-DD."}), 400
 
@@ -222,72 +224,19 @@ class RegisterBus(Resource):
             number_plate=data['number_plate']
         )
 
-        db.session.add(new_bus)
-        db.session.commit()
+        try:
+            db.session.add(new_bus)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback() 
+            return jsonify({"error": str(e)}), 500  
 
         return jsonify({"message": "Bus registered successfully."}), 201
 
-#Update the Bus Price per seat
-class UpdateBusCost(Resource):
-    @jwt_required()
-    def put(self, bus_id):
-        """Update the cost per seat of a bus
-        ---
-        parameters:
-          - name: bus_id
-            in: path
-            required: true
-            type: integer
-          - name: body
-            in: body
-            required: true
-            schema:
-              type: object
-              properties:
-                cost_per_seat:
-                  type: number
-        responses:
-          200:
-            description: Cost per seat updated successfully
-          400:
-            description: Cost per seat is required
-          404:
-            description: Bus not found or permission denied
-        """
-        current_driver_id = get_jwt_identity()
-        bus = Bus.query.filter_by(id=bus_id, driver_id=current_driver_id).first()
 
-        if not bus:
-            return jsonify({"error": "Bus not found or you do not have permission to update this bus."}), 404
+    
 
-        data = request.get_json()
-        if 'cost_per_seat' not in data:
-            return jsonify({"error": "Cost per seat is required."}), 400
-
-        bus.cost_per_seat = data['cost_per_seat']
-        db.session.commit()
-
-        return jsonify({"message": "Cost per seat updated successfully."}), 200
-
-class GetBusesByDriver(Resource):
-    @jwt_required()
-    def get(self):
-        """Get buses by the current driver
-        ---
-        responses:
-          200:
-            description: List of buses for the driver
-          404:
-            description: No buses found for this driver
-        """
-        current_driver_id = get_jwt_identity()
-        buses = Bus.query.filter_by(driver_id=current_driver_id).all()
-
-        if not buses:
-            return jsonify({"message": "No buses found for this driver."}), 404
-
-        return jsonify([bus.to_dict() for bus in buses]), 200
-
+#Scheduling Buses
 class GetScheduledBuses(Resource):
     @jwt_required()
     def get(self):
@@ -301,24 +250,96 @@ class GetScheduledBuses(Resource):
         """
         scheduled_buses = Schedule.query.all()
         if not scheduled_buses:
-            return jsonify({"message": "No scheduled buses found."}), 404
+            return {"message": "No scheduled buses found."}, 404
 
-        return jsonify([{
-            'id': scheduled_bus.id,
+     
+        data = [{
+            "id": scheduled_bus.id,
             'bus_id': scheduled_bus.bus_id,
             'departure_time': scheduled_bus.departure_time.isoformat(),
             'arrival_time': scheduled_bus.arrival_time.isoformat(),
             'travel_date': scheduled_bus.travel_date.isoformat(),
             'available_seats': scheduled_bus.available_seats,
             'occupied_seats': scheduled_bus.occupied_seats,
-            'bus': scheduled_bus.bus.to_dict() if scheduled_bus.bus else None
-        } for scheduled_bus in scheduled_buses]), 200
+            'bus': {
+                'id': scheduled_bus.bus.id,
+                'username': scheduled_bus.bus.username,
+                'number_plate': scheduled_bus.bus.number_plate,
+                
+            } if scheduled_bus.bus else None
+        } for scheduled_bus in scheduled_buses]
+
+        return data, 200
+        
+from datetime import datetime
+
+class ScheduledBuses(Resource):
+    @jwt_required()
+    def post(self):
+        """Create a new scheduled bus
+        ---
+        parameters:
+          - name: body
+            in: body
+            required: true
+            schema:
+              type: object
+              properties:
+                bus_id:
+                  type: integer
+                departure_time:
+                  type: string
+                  format: time
+                arrival_time:
+                  type: string
+                  format: time
+                travel_date:
+                  type: string
+                  format: date
+                available_seats:
+                  type: integer
+                occupied_seats:
+                  type: integer
+        responses:
+          201:
+            description: Scheduled bus created successfully
+          400:
+            description: Error with missing fields or invalid data
+        """
+        data = request.get_json()
+
+        required_fields = ['bus_id', 'departure_time', 'arrival_time', 'travel_date', 'available_seats', 'occupied_seats']
+        missing_fields = [field for field in required_fields if field not in data]
+
+        if missing_fields:
+            return {"error": f"Missing required fields: {', '.join(missing_fields)}"}, 400
+
+        try:
+            departure_datetime = datetime.strptime(f"{data['travel_date']} {data['departure_time']}", "%Y-%m-%d %H:%M:%S")
+            arrival_datetime = datetime.strptime(f"{data['travel_date']} {data['arrival_time']}", "%Y-%m-%d %H:%M:%S")
+
+            new_schedule = Schedule(
+                bus_id=data['bus_id'],
+                departure_time=departure_datetime, 
+                arrival_time=arrival_datetime,     
+                travel_date=data['travel_date'],       
+                available_seats=data['available_seats'],
+                occupied_seats=data['occupied_seats'],
+            )
+            db.session.add(new_schedule)
+            db.session.commit()
+
+            return {"message": "Scheduled bus created successfully."}, 201
+        except Exception as e:
+            db.session.rollback()  
+            return {"error": "Failed to create scheduled bus.", "details": str(e)}, 500
+    
+ 
 
 # Register the resources with the API
 driver_api.add_resource(RegisterBus, "/register/buses")
-driver_api.add_resource(UpdateBusCost, "/buses/<int:bus_id>/cost")
-driver_api.add_resource(GetBusesByDriver, "/buses")
 driver_api.add_resource(Signup, "/signup")
 driver_api.add_resource(Login, "/login")
 driver_api.add_resource(ProtectedResource, "/protected")
-driver_api.add_resource(GetScheduledBuses, "/scheduled_buses")
+driver_api.add_resource(GetScheduledBuses, "/view_scheduled_buses")
+driver_api.add_resource(ScheduledBuses, "/scheduled_buses")
