@@ -106,6 +106,7 @@ class Schedules(Resource):
     def get(self):
         response_dict_list = [scheduled_bus.to_dict() for scheduled_bus in Schedule.query.all()]
         return jsonify(response_dict_list), 200
+    
 
 api.add_resource(Signup, '/signup')    
 api.add_resource(Login, '/login')
