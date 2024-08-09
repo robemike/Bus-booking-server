@@ -1,4 +1,5 @@
 import random
+# from flask_jwt_extended import JWTManager,get_jwt,jwt_required
 from flask_jwt_extended import JWTManager,get_jwt,jwt_required
 from flask_cors import CORS
 from .customers import customer_bp,bcrypt as customer_bcrypt
