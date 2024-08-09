@@ -14,7 +14,6 @@ load_dotenv()
 from flask_swagger_ui import get_swaggerui_blueprint
 from .models import db,Bus,Schedule,Customer,Booking,Driver
 
-
 app = Flask(__name__)
 
 SWAGGER_URL = '/swagger/'  
