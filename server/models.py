@@ -10,8 +10,6 @@ db = SQLAlchemy()
 
 
 class Customer(db.Model, SerializerMixin):
-
-class Customer(db.Model, SerializerMixin):
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True)
     firstname = db.Column(db.String, nullable=False)
@@ -77,7 +75,6 @@ class Schedule(db.Model, SerializerMixin):
     __tablename__ = "schedules"
     id = db.Column(db.Integer, primary_key=True)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
-    bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     departure_time = db.Column(db.DateTime, nullable=False)
     arrival_time = db.Column(db.DateTime, nullable=False)
     travel_date = db.Column(db.Date, nullable=False)
@@ -92,6 +89,14 @@ class Schedule(db.Model, SerializerMixin):
         if arrival_time <= self.departure_time:
             raise ValueError("Arrival time must be after departure time")
         return arrival_time
+    
+    def validate_time_format(time_string):
+        try:
+            
+            datetime.fromisoformat(time_string)
+            return True
+        except ValueError:
+            return False
 
 
 class Booking(db.Model, SerializerMixin):

@@ -1,0 +1,870 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+      "title": "Bus Booking System API",
+      "description": "API for managing bus bookings, customers, drivers, buses, schedules, and admins.",
+      "version": "1.0.0"
+    },
+    "servers": [
+      {
+        "url": "http://127.0.0.1:5555/",
+        "description": "Development server"
+      }
+    ],
+    "paths": {
+      "/customers": {
+        "post": {
+          "summary": "Create a new customer",
+          "description": "Registers a new customer in the system.",
+          "operationId": "createCustomer",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "firstname": {
+                      "type": "string",
+                      "example": "John"
+                    },
+                    "lastname": {
+                      "type": "string",
+                      "example": "Doe"
+                    },
+                    "email": {
+                      "type": "string",
+                      "example": "john.doe@example.com"
+                    },
+                    "password": {
+                      "type": "string",
+                      "example": "password123"
+                    },
+                    "address": {
+                      "type": "string",
+                      "example": "123 Main St"
+                    },
+                    "phone_number": {
+                      "type": "string",
+                      "example": "1234567890"
+                    },
+                    "id_or_passport": {
+                      "type": "string",
+                      "example": "123456789"
+                    }
+                  },
+                  "required": ["firstname", "lastname", "email", "password", "address", "phone_number", "id_or_passport"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Customer successfully created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Customer"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "example": "Invalid input"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/customers/{id}": {
+        "get": {
+          "summary": "Get a customer",
+          "description": "Retrieves a customer by ID.",
+          "operationId": "getCustomer",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer",
+                "example": 1
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Customer details",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Customer"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Customer not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "example": "Customer not found"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/buses": {
+        "post": {
+          "summary": "Add a new bus",
+          "description": "Registers a new bus in the system.",
+          "operationId": "createBus",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "username": {
+                      "type": "string",
+                      "example": "bus_123"
+                    },
+                    "driver_id": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "cost_per_seat": {
+                      "type": "integer",
+                      "example": 50
+                    },
+                    "number_of_seats": {
+                      "type": "integer",
+                      "example": 30
+                    },
+                    "route": {
+                      "type": "string",
+                      "example": "City Center - Airport"
+                    },
+                    "travel_time": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2024-08-09T10:00:00Z"
+                    },
+                    "number_plate": {
+                      "type": "string",
+                      "example": "ABC1234"
+                    }
+                  },
+                  "required": ["username", "driver_id", "cost_per_seat", "number_of_seats", "route", "travel_time", "number_plate"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Bus successfully created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Bus"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "example": "Invalid input"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/buses/{id}": {
+        "get": {
+          "summary": "Get a bus",
+          "description": "Retrieves a bus by ID.",
+          "operationId": "getBus",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer",
+                "example": 1
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Bus details",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Bus"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Bus not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "example": "Bus not found"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/schedules": {
+        "post": {
+          "summary": "Add a new schedule",
+          "description": "Registers a new schedule for a bus.",
+          "operationId": "createSchedule",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "bus_id": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "departure_time": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2024-08-09T10:00:00Z"
+                    },
+                    "arrival_time": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2024-08-09T12:00:00Z"
+                    },
+                    "travel_date": {
+                      "type": "string",
+                      "format": "date",
+                      "example": "2024-08-09"
+                    },
+                    "available_seats": {
+                      "type": "integer",
+                      "example": 30
+                    },
+                    "occupied_seats": {
+                      "type": "integer",
+                      "example": 0
+                    }
+                  },
+                  "required": ["bus_id", "departure_time", "arrival_time", "travel_date", "available_seats", "occupied_seats"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Schedule successfully created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Schedule"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "example": "Invalid input"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/schedules/{id}": {
+        "get": {
+          "summary": "Get a schedule",
+          "description": "Retrieves a schedule by ID.",
+          "operationId": "getSchedule",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer",
+                "example": 1
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Schedule details",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Schedule"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Schedule not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "example": "Schedule not found"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/bookings": {
+        "post": {
+          "summary": "Create a new booking",
+          "description": "Books seats on a bus for a customer.",
+          "operationId": "createBooking",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "customer_id": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "schedule_id": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "seats_booked": {
+                      "type": "integer",
+                      "example": 2
+                    },
+                    "total_cost": {
+                      "type": "integer",
+                      "example": 100
+                    }
+                  },
+                  "required": ["customer_id", "schedule_id", "seats_booked", "total_cost"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Booking successfully created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Booking"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "example": "Invalid input"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/bookings/{id}": {
+        "get": {
+          "summary": "Get a booking",
+          "description": "Retrieves a booking by ID.",
+          "operationId": "getBooking",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer",
+                "example": 1
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Booking details",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Booking"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Booking not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "example": "Booking not found"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/drivers": {
+        "post": {
+          "summary": "Add a new driver",
+          "description": "Registers a new driver in the system.",
+          "operationId": "createDriver",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "Jane Doe"
+                    },
+                    "license_number": {
+                      "type": "string",
+                      "example": "DL123456"
+                    },
+                    "phone_number": {
+                      "type": "string",
+                      "example": "0987654321"
+                    },
+                    "email": {
+                      "type": "string",
+                      "example": "jane.doe@example.com"
+                    }
+                  },
+                  "required": ["name", "license_number", "phone_number", "email"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Driver successfully created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Driver"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "example": "Invalid input"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/drivers/{id}": {
+        "get": {
+          "summary": "Get a driver",
+          "description": "Retrieves a driver by ID.",
+          "operationId": "getDriver",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer",
+                "example": 1
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Driver details",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Driver"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Driver not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "example": "Driver not found"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/admins": {
+        "post": {
+          "summary": "Add a new admin",
+          "description": "Registers a new admin in the system.",
+          "operationId": "createAdmin",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "Admin User"
+                    },
+                    "email": {
+                      "type": "string",
+                      "example": "admin@example.com"
+                    },
+                    "password": {
+                      "type": "string",
+                      "example": "securepassword"
+                    }
+                  },
+                  "required": ["name", "email", "password"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Admin successfully created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Admin"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "example": "Invalid input"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "Customer": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 1
+            },
+            "firstname": {
+              "type": "string",
+              "example": "John"
+            },
+            "lastname": {
+              "type": "string",
+              "example": "Doe"
+            },
+            "email": {
+              "type": "string",
+              "example": "john.doe@example.com"
+            },
+            "address": {
+              "type": "string",
+              "example": "123 Main St"
+            },
+            "phone_number": {
+              "type": "string",
+              "example": "1234567890"
+            },
+            "id_or_passport": {
+              "type": "string",
+              "example": "123456789"
+            },
+            "role" :{
+              "type":"string",
+              "example":"customer"
+
+            }
+          }
+        },
+        "Bus": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 1
+            },
+            "username": {
+              "type": "string",
+              "example": "bus_123"
+            },
+            "driver_id": {
+              "type": "integer",
+              "example": 1
+            },
+            "cost_per_seat": {
+              "type": "integer",
+              "example": 50
+            },
+            "number_of_seats": {
+              "type": "integer",
+              "example": 30
+            },
+            "route": {
+              "type": "string",
+              "example": "City Center - Airport"
+            },
+            "travel_time": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-08-09T10:00:00Z"
+            },
+            "number_plate": {
+              "type": "string",
+              "example": "ABC1234"
+            }
+          }
+        },
+        "Schedule": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 1
+            },
+            "bus_id": {
+              "type": "integer",
+              "example": 1
+            },
+            "departure_time": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-08-09T10:00:00Z"
+            },
+            "arrival_time": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-08-09T12:00:00Z"
+            },
+            "travel_date":{
+              "type":"date",
+              "format":"date",
+              "example":"2024-08-09"      
+            },
+            "available_seats":{
+              "type":"integer",
+              "format":"number",
+              "example":12
+            },
+            "occupied_seats":{
+              "type":"integer",
+              "format":"number",
+              "example":10
+            }
+          }
+        },
+        "Booking": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 1
+            },
+            "customer_id": {
+              "type": "integer",
+              "example": 1
+            },
+            "bus_id":{
+              "type":"integer",
+              "example":1
+            },
+            "booking_date":{
+              "type":"date",
+              "format":"date",
+              "example":"2024-08-09"
+            },
+            "schedule_id": {
+              "type": "integer",
+              "example": 1
+            },
+            "seats_booked": {
+              "type": "integer",
+              "example": 2
+            },
+            "total_cost": {
+              "type": "integer",
+              "example": 100
+            }
+          }
+        },
+        "Driver": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 1
+            },
+            "firstname": {
+              "type": "string",
+              "example": "Jane"
+            },
+            "lastname": {
+              "type": "string",
+              "example": "Doe"
+            },
+            "license_number": {
+              "type": "string",
+              "example": "DL123456"
+            },
+            "phone_number": {
+              "type": "string",
+              "example": "0987654321"
+            },
+            "email": {
+              "type": "string",
+              "example": "jane.doe@example.com"
+            },
+            "role" :{
+              "type":"string",
+              "example":"customer"
+
+            }
+          }
+        },
+        "Admin": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 1
+            },
+            "username": {
+              "type": "string",
+              "example": "Admin User"
+            },
+            "email": {
+              "type": "string",
+              "example": "admin@example.com"
+            },
+            "role" :{
+              "type":"string",
+              "example":"customer"
+
+            }
+          }
+        }
+      }
+    }
+  }

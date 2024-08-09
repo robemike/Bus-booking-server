@@ -12,7 +12,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 from flask_swagger_ui import get_swaggerui_blueprint
-from models import db,Bus,Schedule,Customer,Booking
+from models import db,Bus,Schedule,Customer,Booking,Driver
 
 
 
@@ -43,8 +43,8 @@ def logout():
     BLACKLIST.add(jti)
     return jsonify({"success":"Successfully logged out"}), 200
 
-SWAGGER_URL = '/swagger'  
-API_URL = '.static/swagger.json' 
+SWAGGER_URL = '/swagger/'  
+API_URL = '/server/static/swagger.json' 
 
 
 # Call factory function to create our blueprint
@@ -57,7 +57,7 @@ swaggerui_blueprint = get_swaggerui_blueprint(
 )
 app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
-@app.route('/swagger', strict_slashes=False)
+@app.route('/swagger/', strict_slashes=False)
 def swagger_view():
     return app.send_static_file('swagger.json')
 
@@ -142,32 +142,77 @@ def get_buses():
     
 #     else:
 #         return jsonify({'message': 'Customer not found'}), 404
+
+
+#Get Drivers
+@app.route('/drivers', methods=['GET'], endpoint='view_drivers')
+def get_scheduled_bus():
+    drivers = Driver.query.all()
+    if not drivers:
+        return jsonify({"message": "No Driver found."}), 404
+    return jsonify([{
+                'id': driver.id,
+                'firstname': driver.firstname,
+                'lastname': driver.lastname,
+                'license_number': driver.license_number,
+                'experience_years': driver.experience_years,
+                'phone_number': driver.phone_number,
+                'email':driver.email
+            } for driver in drivers]), 200
+
+
+@app.route('/drivers/<int:driver_id>', methods=['GET'])
+def get_driver(driver_id):
+    driver = Driver.query.get(driver_id)
     
+    if not driver:
+        return {"message": "Driver not found."}, 404
+    return jsonify({
+        'id': driver.id,
+        'firstname': driver.firstname,
+        'lastname': driver.lastname,
+        'license_number': driver.license_number,
+        'experience_years': driver.experience_years,
+        'phone_number': driver.phone_number,
+        'email': driver.email
+    }), 200
+
 
 #Buses
-@app.route('/buses', methods=['GET'],endpoint='view_buses')
+@app.route('/buses', methods=['GET'], endpoint='view_buses')
 def get_buses():
-    buses=Bus.query.all()
+    buses = Bus.query.all()
     if not buses:
         return jsonify({"message": "No buses found."}), 404
+
     return jsonify([{
-            'id': bus.id,
-            'username': bus.username,
-            'cost_per_seat': bus.cost_per_seat,
-            'number_of_seats': bus.number_of_seats,
-            'route': bus.route,
-            'travel_time': bus.travel_time.isoformat(), 
-            'number_plate': bus.number_plate,
-        } for bus in buses]),200
+        'id': bus.id,
+        'username': bus.username,
+        'cost_per_seat': bus.cost_per_seat,
+        'number_of_seats': bus.number_of_seats,
+        'route': bus.route,
+        'travel_time': bus.travel_time.isoformat(), 
+        'number_plate': bus.number_plate,
+    } for bus in buses]), 200
 
 
-#Get buses by driver
-@app.route('/buses/<int:driver_id>', methods=['GET'])
+# Get buses by driver
+@app.route('/buses/driver/<int:driver_id>', methods=['GET'])
 def get_buses_by_driver(driver_id):
     buses = Bus.query.filter_by(driver_id=driver_id).all()
+    
     if not buses:
-        return {"message": "No buses found for this driver."}, 404
-    return {"buses": [bus.to_dict() for bus in buses]}, 200
+        return jsonify({"message": "No buses found for this driver."}), 404
+
+    return jsonify([{
+        'id': bus.id,
+        'username': bus.username,
+        'cost_per_seat': bus.cost_per_seat,
+        'number_of_seats': bus.number_of_seats,
+        'route': bus.route,
+        'travel_time': bus.travel_time.isoformat() if bus.travel_time else None,
+        'number_plate': bus.number_plate
+    } for bus in buses]), 200  # Added status code 200
 
 
 @app.route('/buses', methods=['POST'], endpoint='add_bus_on_availability')
@@ -211,16 +256,17 @@ def get_scheduled_bus():
     scheduled_buses = Schedule.query.all()
     if not scheduled_buses:
         return jsonify({"message": "No scheduled buses found."}), 404
+
     return jsonify([{
-                'id': scheduled_bus.id,
-                'bus_id': scheduled_bus.bus_id,
-                'departure_time': scheduled_bus.departure_time.isoformat(),
-                'arrival_time': scheduled_bus.arrival_time.isoformat(),
-                'travel_date': scheduled_bus.travel_date.isoformat(),
-                'available_seats': scheduled_bus.available_seats,
-                'occupied_seats': scheduled_bus.occupied_seats,
-                'bus': scheduled_bus.bus.to_dict() if scheduled_bus.bus else None  # Include bus details if needed
-            } for scheduled_bus in scheduled_buses]), 200
+        'id': scheduled_bus.id,
+        'bus_id': scheduled_bus.bus_id,
+        'departure_time': scheduled_bus.departure_time.isoformat() if scheduled_bus.departure_time else None,
+        'arrival_time': scheduled_bus.arrival_time.isoformat() if scheduled_bus.arrival_time else None,
+        'travel_date': scheduled_bus.travel_date.isoformat() if scheduled_bus.travel_date else None,
+        'available_seats': scheduled_bus.available_seats,
+        'occupied_seats': scheduled_bus.occupied_seats
+    
+    } for scheduled_bus in scheduled_buses]), 200
 
 
 
@@ -296,6 +342,23 @@ def get_tickets():
             'total_cost':ticket.total_cost
             
         } for ticket in tickets]),200
+
+@app.route('/tickets/<int:ticket_id>', methods=['GET'], endpoint='view_tickets_by_id')
+def get_ticket_by_id(ticket_id):
+    # Fetch the ticket based on the provided ticket_id
+    ticket = Booking.query.get(ticket_id)
+    
+    if not ticket:
+        return jsonify({"message": "No ticket found for this ID."}), 404
+    
+    return jsonify({
+        'id': ticket.id,
+        'username': ticket.username,
+        'booking_date': ticket.booking_date.isoformat(),  # Ensure this is formatted correctly
+        'number_of_seats': ticket.number_of_seats,
+        'route': ticket.route,
+        'total_cost': ticket.total_cost
+    }), 200
 
 
 
