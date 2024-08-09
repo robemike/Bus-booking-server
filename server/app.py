@@ -6,7 +6,7 @@ from .driver import driver_bp,bcrypt as driver_bcrypt
 from datetime import timedelta,date,datetime
 from flask import Flask,jsonify,request
 from flask_migrate import Migrate
-from mpesa import mpesa_client
+# from mpesa import mpesa_client
 from datetime import date
 import os
 from dotenv import load_dotenv
@@ -76,23 +76,23 @@ app.register_blueprint(driver_bp)
 
 
 #Routes
-@app.route('/stk_push', methods=['GET'])
-def stk_push():
-    # Retrieve parameters from the request
-    phone_number = request.args.get('phone_number') 
-    if not phone_number:
-        return jsonify({"error": "Phone number is required"}), 400
+# @app.route('/stk_push', methods=['GET'])
+# def stk_push():
+#     # Retrieve parameters from the request
+#     phone_number = request.args.get('phone_number') 
+#     if not phone_number:
+#         return jsonify({"error": "Phone number is required"}), 400
 
-    amount = request.args.get('amount', 1, type=int)
-    account_reference = 'Laurine'
-    transaction_desc = 'Description'
-    callback_url = 'https://api.darajambili.com/express-payment'
+#     amount = request.args.get('amount', 1, type=int)
+#     account_reference = 'Laurine'
+#     transaction_desc = 'Description'
+#     callback_url = 'https://api.darajambili.com/express-payment'
     
-    try:
-        response = mpesa_client.stk_push(phone_number, amount, account_reference, transaction_desc, callback_url)
-        return jsonify(response), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+#     try:
+#         response = mpesa_client.stk_push(phone_number, amount, account_reference, transaction_desc, callback_url)
+#         return jsonify(response), 200
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
     
 #home
 @app.route("/")
