@@ -17,6 +17,7 @@ gunicorn = "*"
 psycopg2-binary = "*"
 python-dotenv = "*"
 faker = "*"
+flask-jwt-extended = "*"
 
 [dev-packages]
 
