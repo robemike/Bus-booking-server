@@ -13,6 +13,9 @@ flask-bcrypt = "*"
 flask-restful = "*"
 pytest = "*"
 flask-cors = "*"
+gunicorn = "*"
+psycopg2-binary = "*"
+python-dotenv = "*"
 faker = "*"
 
 [dev-packages]
