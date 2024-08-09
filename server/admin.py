@@ -54,8 +54,19 @@ def admin_required(fn):
 class Drivers(Resource):
     @admin_required
     def get(self):
-        response_dict_list = [driver.to_dict() for driver in Driver.query.all()]
-        return jsonify(response_dict_list), 200
+        drivers=Driver.query.all()
+        if not drivers:
+            return jsonify({"message": "No buses found."}), 404
+        return jsonify([{
+                'id': driver.id,
+                'firstname': driver.firstname,
+                'lastname': driver.lastname,
+                'license_number': driver.license_number,
+                'experiene_years': driver.experiene_years,
+                'phone_number': driver.phone_number, 
+                'email': driver.email,
+                'password': driver.password,
+            } for driver in drivers]),200
     
     @admin_required
     def delete(self, id):
@@ -73,7 +84,7 @@ class Customers(Resource):
     @admin_required
     def get(self):
         response_dict_list = [customer.to_dict() for customer in Customer.query.all()]
-        return jsonify(response_dict_list), 200
+        return response_dict_list, 200
 
 class Buses(Resource):
     @admin_required
@@ -81,7 +92,7 @@ class Buses(Resource):
         response_dict_list = [bus.to_dict() for bus in Bus.query.all()]
         return jsonify(response_dict_list), 200
     
-class ScheduledBuses(Resource):
+class Schedules(Resource):
     @admin_required
     def get(self):
         response_dict_list = [scheduled_bus.to_dict() for scheduled_bus in Schedule.query.all()]
@@ -92,4 +103,4 @@ api.add_resource(Login, '/login')
 api.add_resource(Drivers, '/drivers', "/drivers/<int:id>")
 api.add_resource(Customers, '/customers')
 api.add_resource(Buses, '/buses')
-api.add_resource(ScheduledBuses, '/scheduled_buses')
+api.add_resource(Schedules, '/scheduled_buses')

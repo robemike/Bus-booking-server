@@ -112,14 +112,6 @@ class RefreshToken(Resource):
         return refresh()
     
 
-class Logout(Resource):
-    @jwt_required(refresh=True)
-    def post(self):
-        jti = get_jwt_identity()
-        jwt.blacklist_token(jti)
-        return {"message": "Logged out successfully."}, 200
-    
-
 class Bookings(Resource):
     @jwt_required()
     def post(self):
@@ -132,7 +124,7 @@ class Bookings(Resource):
             "departure",
             "to",
             "number_of_seats",
-            "scheduled_bus_id",
+            "schedule_id",
             "total_cost"
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
@@ -145,11 +137,11 @@ class Bookings(Resource):
         customer_id = get_jwt_identity()
         departure = data.get('departure')
         destination = data.get('to')
-        scheduled_bus_id = data.get('scheduled_bus_id')
+        schedule_id = data.get('scheduled_bus_id')
         number_of_seats = data.get('number_of_seats')
         total_cost = data.get('total_cost')
 
-        scheduled_bus = Schedule.query.get(scheduled_bus_id)
+        scheduled_bus = Schedule.query.get(schedule_id)
         if not scheduled_bus:
             return {"error": "Scheduled bus not found."}, 404
         
@@ -161,7 +153,7 @@ class Bookings(Resource):
                 departure=departure,
                 to=destination,
                 customer_id=customer_id,
-                scheduled_bus_id=scheduled_bus_id,
+                schedule_id=schedule_id,
                 number_of_seats=number_of_seats,
                 total_cost=total_cost
             )
@@ -203,5 +195,4 @@ class Bookings(Resource):
 customer_api.add_resource(Signup, "/signup")
 customer_api.add_resource(Login, "/login")
 customer_api.add_resource(RefreshToken, "/refresh")
-customer_api.add_resource(Logout, "/logout")
 customer_api.add_resource(Bookings, "/bookings", "/bookings/<int:booking_id>")

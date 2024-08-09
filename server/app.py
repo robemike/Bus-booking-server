@@ -2,12 +2,12 @@
 
 # Configuration of our flask application
 import random
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt
 from flask_cors import CORS
 from customers import customer_bp, bcrypt, jwt
 from driver import driver_bp
 from datetime import timedelta
-from flask import Flask
+from flask import Flask, jsonify
 from admin import admin_bp
 from flask_migrate import Migrate
 
@@ -31,6 +31,21 @@ migrate = Migrate(app, db)
 db.init_app(app)
 bcrypt.init_app(app)
 jwt.init_app(app)
+
+
+# Logout
+BLACKLIST = set()
+@jwt.token_in_blocklist_loader
+def check_if_token_in_blocklist(jwt_header, decrypted_token):
+    return decrypted_token['jti'] in BLACKLIST
+
+@app.route("/logout", methods=["POST"])
+@jwt_required(refresh=True)
+def logout():
+    jti = get_jwt()["jti"]
+    BLACKLIST.add(jti)
+    return jsonify({"success":"Successfully logged out"}), 200
+
 
 if __name__ == "__main__":
     app.run(port=5555, debug=True)

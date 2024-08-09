@@ -6,7 +6,7 @@ from sqlalchemy.orm import validates
 db = SQLAlchemy()
 
 
-class Customer(db.Model):
+class Customer(db.Model, SerializerMixin):
 
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True)
@@ -40,7 +40,7 @@ class Customer(db.Model):
         return ID_or_Passport
 
 
-class Bus(db.Model):
+class Bus(db.Model, SerializerMixin):
 
     __tablename__ = "buses"
     id = db.Column(db.Integer, primary_key=True)
@@ -65,7 +65,7 @@ class Bus(db.Model):
         return number_plate
 
 
-class Schedule(db.Model):
+class Schedule(db.Model, SerializerMixin):
 
     __tablename__ = "schedules"
     id = db.Column(db.Integer, primary_key=True)
@@ -90,7 +90,7 @@ class Schedule(db.Model):
         return departure_time, arrival_time
 
 
-class Booking(db.Model):
+class Booking(db.Model, SerializerMixin):
     __tablename__ = "bookings"
     id = db.Column(db.Integer, primary_key=True)
     departure = db.Column(db.String, nullable=False) # from
@@ -99,14 +99,14 @@ class Booking(db.Model):
     total_cost = db.Column(db.Float, nullable=False)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
     schedule_id = db.Column(
-        db.Integer, db.ForeignKey("schedules.id"), nullable=False
+        db.Integer, db.ForeignKey("schedules.id"), nullable = True
     )
 
     customer = db.relationship("Customer", back_populates="bookings")
     schedule = db.relationship("Schedule", back_populates="bookings")
 
 
-class Driver(db.Model):
+class Driver(db.Model, SerializerMixin):
 
     __tablename__ = "drivers"
     id = db.Column(db.Integer, primary_key=True)
