@@ -1,8 +1,8 @@
 import random
 from flask_jwt_extended import JWTManager,get_jwt,jwt_required
 from flask_cors import CORS
-from customers import customer_bp,bcrypt as customer_bcrypt
-from driver import driver_bp,bcrypt as driver_bcrypt
+from .customers import customer_bp,bcrypt as customer_bcrypt
+from .driver import driver_bp,bcrypt as driver_bcrypt
 from datetime import timedelta,date,datetime
 from flask import Flask,jsonify,request
 from flask_migrate import Migrate
@@ -12,11 +12,28 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 from flask_swagger_ui import get_swaggerui_blueprint
-from models import db,Bus,Schedule,Customer,Booking,Driver
+from .models import db,Bus,Schedule,Customer,Booking,Driver
 
 
 
 app = Flask(__name__)
+SWAGGER_URL = '/swagger/'  
+API_URL = '/static/swagger.json' 
+
+
+# Call factory function to create our blueprint
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,  
+    API_URL,
+    config={  
+        'app_name': "Test application"
+    }
+)
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
+
+@app.route('/swagger/', strict_slashes=False)
+def swagger_view():
+    return app.send_static_file('swagger.json')
 CORS(app)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URI')
 # app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///bus_booking.db'
@@ -43,23 +60,7 @@ def logout():
     BLACKLIST.add(jti)
     return jsonify({"success":"Successfully logged out"}), 200
 
-SWAGGER_URL = '/swagger/'  
-API_URL = '/server/static/swagger.json' 
 
-
-# Call factory function to create our blueprint
-swaggerui_blueprint = get_swaggerui_blueprint(
-    SWAGGER_URL,  
-    API_URL,
-    config={  
-        'app_name': "Test application"
-    }
-)
-app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
-
-@app.route('/swagger/', strict_slashes=False)
-def swagger_view():
-    return app.send_static_file('swagger.json')
 
 
 migrate = Migrate(app, db)
@@ -96,52 +97,13 @@ def stk_push():
 #home
 @app.route("/")
 def home():
-    return {"msg":"event"}
+    return {"msg":"Welcome to Bus Booking App"}
 
 #Customers
 @app.route('/customers', methods=['GET'],endpoint='view_customers')
 def get_buses():
     customers=Customer.query.all()
     return jsonify([customer.to_dict() for customer in customers]),200
-
-
-# @app.route('/customers',methods=['POST'],endpoint='adding_customers')
-# def add_customers():
-#     data=request.get_json()
-
-#     required_fields=['firstname','lastname','email','password','address','phone_number','id_or_passport']
-
-#     for field in required_fields:
-#         if field not in data:
-#             return jsonify({'message': f'Missing required field: {field}'}),400
-
-#     hashed_password = bcrypt.generate_password_hash(data['password']).decode('utf-8')
-#     new_customer=Customer(firstname=data['firstname'],
-#                 lastname=data['lastname'],
-#                 email=data['email'],
-#                 password=hashed_password,
-#                 address=data['address'],
-#                 phone_number=data['phone_number'],
-#                 id_or_passport=data['id_or_passport']
-#                 # role=data['role']
-#     )
-#     db.session.add(new_customer)
-#     db.session.commit()
-
-#     return jsonify({'message': 'Customer created successfully'}), 201
-
-# @app.route('/customer/<int:customer_id>',methods=['DELETE'],endpoint='delete_customer')
-# def delete_customer(customer_id):
-#     customer=Customer.query.get(customer_id)
-
-#     if customer:
-#         db.session.delete(customer)
-#         db.session.commit()
-
-#         return jsonify({'message': 'Customer deleted successfully'}),200
-    
-#     else:
-#         return jsonify({'message': 'Customer not found'}), 404
 
 
 #Get Drivers

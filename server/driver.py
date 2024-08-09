@@ -3,9 +3,10 @@ from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
 from models import Driver, db,Bus,Schedule
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,jwt_required,get_jwt_identity
-from flask_swagger_ui import get_swaggerui_blueprint
+# from flask_swagger_ui import get_swaggerui_blueprint
 from datetime import date
-driver_bp = Blueprint("driver_bp", __name__, url_prefix="/drivers/auth")
+
+driver_bp = Blueprint("driver_bp", __name__, url_prefix="/drivers")
 bcrypt = Bcrypt()
 jwt = JWTManager()
 driver_api = Api(driver_bp)
@@ -38,7 +39,8 @@ class Signup(Resource):
               type: object
               properties:
                 firstname:
-                  type: string
+                  type: s
+                  tring
                 lastname:
                   type: string
                 license_number:
@@ -84,28 +86,29 @@ class Signup(Resource):
         license_number = data["license_number"]
         experience_years = data["experience_years"]
 
-        existing_customer = Driver.query.filter_by(
+        existing_driver = Driver.query.filter_by(
             firstname=firstname, lastname=lastname, email=email
         ).first()
 
-        if existing_customer:
+        if existing_driver:
             return {"error": "Driver already exists."}, 400
 
-        hashed_password = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
-        new_customer = Driver(
-            firstname=firstname,
-            lastname=lastname,
-            email=email,
-            license_number=license_number,
-            experience_years=experience_years,
-            password=hashed_password,
-            phone_number=data["phone_number"],
-        )
-
-        db.session.add(new_customer)
+        try:
+            hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+            new_driver = Driver(
+                firstname=firstname,
+                lastname=lastname,
+                email=email,
+                password=hashed_password,
+                phone_number=data["phone_number"],
+                license_number=data["license_number"],
+                experience_years=data["experience_years"],
+            )
+        except KeyError as e:
+            return {"error": f"Missing required field: {e}"}, 400
+        db.session.add(new_driver)
         db.session.commit()
-
-        return {"message": "Driver registered successfully."}, 201
+        return {"success": "Driver registered successfully"}, 201
     
 class Login(Resource):
     def post(self):
@@ -147,14 +150,11 @@ class Login(Resource):
                 "error": f"Missing required fields: {', '.join(missing_fields)}"
             }, 400
 
-        user = Driver.query.filter_by(
-            email=data["email"],
-            license_number=data["license_number"],
-        ).first()
+        driver = Driver.query.filter_by(email=data["email"]).first()
 
-        if user and bcrypt.check_password_hash(user.password, data["password"]):
-            access_token = create_access_token(identity=user.id)
-            refresh_token = create_refresh_token(identity=user.id)
+        if driver and bcrypt.check_password_hash(driver.password, data["password"]):
+            access_token = create_access_token(identity=driver.id)
+            refresh_token = create_refresh_token(identity=driver.id)
             return {"access_token": access_token, "refresh_token": refresh_token}, 200
         else:
             return {"error": "Invalid Driver login credentials"}, 401
@@ -226,7 +226,7 @@ class RegisterBus(Resource):
         db.session.commit()
 
         return jsonify({"message": "Bus registered successfully."}), 201
-    
+
 #Update the Bus Price per seat
 class UpdateBusCost(Resource):
     @jwt_required()
@@ -322,4 +322,3 @@ driver_api.add_resource(Signup, "/signup")
 driver_api.add_resource(Login, "/login")
 driver_api.add_resource(ProtectedResource, "/protected")
 driver_api.add_resource(GetScheduledBuses, "/scheduled_buses")
-

@@ -1,14 +1,9 @@
-from flask import Blueprint, request, jsonify, make_response
+from flask import Blueprint, request
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from models import Driver, Customer, Booking, db, Schedule
-from flask_jwt_extended import (
-    JWTManager,
-    create_access_token,
-    create_refresh_token,
-    get_jwt_identity,
-    jwt_required
-)
+from models import Customer, Booking, db, Schedule
+from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required
+
 
 # Create a blueprint for authentication
 customer_bp = Blueprint("customer_bp", __name__, url_prefix="/")
@@ -16,6 +11,11 @@ bcrypt = Bcrypt()
 jwt = JWTManager()
 customer_api = Api(customer_bp)
 
+class ProtectedResource(Resource):
+    @jwt_required()
+    def get(self):
+        current_user = get_jwt_identity() 
+        return {"message": f"Hello, user {current_user}"}
 
 class Signup(Resource):
     def post(self):
@@ -30,7 +30,7 @@ class Signup(Resource):
             "email",
             "password",
             "phone_number",
-            "ID_or_Passport",
+            "id_or_passport",
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
@@ -47,7 +47,7 @@ class Signup(Resource):
         ).first()
 
         if existing_customer:
-            return {"error": "User already exists."}, 400
+            return {"error": "Customer already exists."}, 400
 
         try:
             hashed_password = bcrypt.generate_password_hash(data["password"]).decode(
@@ -59,14 +59,14 @@ class Signup(Resource):
                 email=email,
                 password=hashed_password,
                 phone_number=data["phone_number"],
-                ID_or_Passport=data["ID_or_Passport"],
+                ID_or_Passport=data["id_or_passport"],
             )
         except KeyError as e:
             return {"error": f"Missing required field: {e}"}, 400
         db.session.add(new_customer)
         db.session.commit()
 
-        return {"message": "User registered successfully."}, 201
+        return {"message": "Customer registered successfully."}, 201
 
 
 class Login(Resource):
@@ -78,7 +78,7 @@ class Login(Resource):
 
         required_fields = [
             "email",
-            "password",
+            "password"
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
@@ -124,7 +124,7 @@ class Bookings(Resource):
             "departure",
             "to",
             "number_of_seats",
-            "schedule_id",
+            "scheduled_bus_id",
             "total_cost"
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
@@ -137,11 +137,11 @@ class Bookings(Resource):
         customer_id = get_jwt_identity()
         departure = data.get('departure')
         destination = data.get('to')
-        schedule_id = data.get('scheduled_bus_id')
+        scheduled_bus_id = data.get('scheduled_bus_id')
         number_of_seats = data.get('number_of_seats')
         total_cost = data.get('total_cost')
 
-        scheduled_bus = Schedule.query.get(schedule_id)
+        scheduled_bus = Schedule.query.get(scheduled_bus_id)
         if not scheduled_bus:
             return {"error": "Scheduled bus not found."}, 404
         
@@ -153,7 +153,7 @@ class Bookings(Resource):
                 departure=departure,
                 to=destination,
                 customer_id=customer_id,
-                schedule_id=schedule_id,
+                scheduled_bus_id=scheduled_bus_id,
                 number_of_seats=number_of_seats,
                 total_cost=total_cost
             )

@@ -1,6 +1,5 @@
-from datetime import datetime
+from datetime import datetime,time
 from sqlalchemy_serializer import SerializerMixin
-from datetime import date,datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
 from sqlalchemy_serializer import SerializerMixin
@@ -12,8 +11,6 @@ db = SQLAlchemy()
 class Customer(db.Model, SerializerMixin):
     __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True)
-    firstname = db.Column(db.String, nullable=False)
-    lastname = db.Column(db.String, nullable=False)
     firstname = db.Column(db.String, nullable=False)
     lastname = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
@@ -56,7 +53,7 @@ class Bus(db.Model, SerializerMixin):
     cost_per_seat = db.Column(db.Integer, nullable=False)
     number_of_seats = db.Column(db.Integer, nullable=False)
     route = db.Column(db.String, nullable=False)
-    travel_time = db.Column(db.DateTime, nullable=False)
+    travel_time = db.Column(db.Time, nullable=False)
     number_plate = db.Column(db.String,unique=True)
     
 
@@ -75,8 +72,8 @@ class Schedule(db.Model, SerializerMixin):
     __tablename__ = "schedules"
     id = db.Column(db.Integer, primary_key=True)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
-    departure_time = db.Column(db.DateTime, nullable=False)
-    arrival_time = db.Column(db.DateTime, nullable=False)
+    departure_time = db.Column(db.Time, nullable=False)
+    arrival_time = db.Column(db.Time, nullable=False)
     travel_date = db.Column(db.Date, nullable=False)
     available_seats = db.Column(db.Integer, nullable=False)
     occupied_seats = db.Column(db.Integer, nullable=False)
@@ -107,8 +104,6 @@ class Booking(db.Model, SerializerMixin):
     booking_date = db.Column(db.Date, default=datetime.utcnow)
     number_of_seats = db.Column(db.Integer, nullable=False)
     total_cost = db.Column(db.Float)
-    # _from=db.Column(db.String)
-    # _to=db.Column(db.String)
 
     customer = db.relationship("Customer", back_populates="bookings")
     bus = db.relationship("Bus", back_populates="bookings")
