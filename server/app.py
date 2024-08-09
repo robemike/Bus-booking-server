@@ -1,8 +1,8 @@
 import random
 from flask_jwt_extended import JWTManager,get_jwt,jwt_required
 from flask_cors import CORS
-from .customers import customer_bp,bcrypt as customer_bcrypt
-from .driver import driver_bp,bcrypt as driver_bcrypt
+from customers import customer_bp,bcrypt as customer_bcrypt
+from driver import driver_bp,bcrypt as driver_bcrypt
 from datetime import timedelta,date,datetime
 from flask import Flask,jsonify,request
 from flask_migrate import Migrate
@@ -11,29 +11,30 @@ from datetime import date
 import os
 from dotenv import load_dotenv
 load_dotenv()
-# from flask_swagger_ui import get_swaggerui_blueprint
-from .models import db,Bus,Schedule,Customer,Booking,Driver
+from flask_swagger_ui import get_swaggerui_blueprint
+from models import db,Bus,Schedule,Customer,Booking,Driver
 
 
 
 app = Flask(__name__)
-# SWAGGER_URL = '/swagger/'  
-# API_URL = '/static/swagger.json' 
+
+SWAGGER_URL = '/swagger/'  
+API_URL = '/static/swagger.json' 
 
 
-# # Call factory function to create our blueprint
-# swaggerui_blueprint = get_swaggerui_blueprint(
-#     SWAGGER_URL,  
-#     API_URL,
-#     config={  
-#         'app_name': "Test application"
-#     }
-# )
-# app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
+# Call factory function to create our blueprint
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,  
+    API_URL,
+    config={  
+        'app_name': "Test application"
+    }
+)
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
-# @app.route('/swagger/', strict_slashes=False)
-# def swagger_view():
-#     return app.send_static_file('swagger.json')
+@app.route('/swagger/', strict_slashes=False)
+def swagger_view():
+    return app.send_static_file('swagger.json')
 
 CORS(app)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URI')
