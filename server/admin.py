@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_restful import Api, Resource
-from models import Admin, db, Driver, Customer, Bus, ScheduledBus
+from models import Admin, db, Driver, Customer, Bus, Schedule
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 from flask_bcrypt import Bcrypt
 from functools import wraps
@@ -84,7 +84,7 @@ class Buses(Resource):
 class ScheduledBuses(Resource):
     @admin_required
     def get(self):
-        response_dict_list = [scheduled_bus.to_dict() for scheduled_bus in ScheduledBus.query.all()]
+        response_dict_list = [scheduled_bus.to_dict() for scheduled_bus in Schedule.query.all()]
         return jsonify(response_dict_list), 200
 
 api.add_resource(Signup, '/signup')    
