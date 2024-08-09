@@ -16,6 +16,7 @@ from .models import db,Bus,Schedule,Customer,Booking,Driver
 
 app = Flask(__name__)
 
+#Swagger
 SWAGGER_URL = '/swagger/'  
 API_URL = '/static/swagger.json' 
 
