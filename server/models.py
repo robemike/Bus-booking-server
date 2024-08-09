@@ -49,6 +49,9 @@ class Customer(db.Model, SerializerMixin):
 
 class Bus(db.Model, SerializerMixin):
     __tablename__ = "buses"
+
+    serialize_rules = ('-driver.buses',)
+    
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
     driver_id = db.Column(db.Integer, db.ForeignKey("drivers.id"), nullable=False)
@@ -126,6 +129,9 @@ class Booking(db.Model, SerializerMixin):
 
 class Driver(db.Model, SerializerMixin):
     __tablename__ = "drivers"
+
+    serialize_rules = ('-buses.driver',)
+
     id = db.Column(db.Integer, primary_key=True)
     firstname = db.Column(db.String, nullable=False)
     lastname = db.Column(db.String, nullable=False)

@@ -171,7 +171,7 @@ class RegisterBus(Resource):
             required: true
             schema:
               type: object
-              properties:
+              properties: 
                 username:
                   type: string
                 cost_per_seat:
@@ -259,16 +259,16 @@ class UpdateBusCost(Resource):
         bus = Bus.query.filter_by(id=bus_id, driver_id=current_driver_id).first()
 
         if not bus:
-            return jsonify({"error": "Bus not found or you do not have permission to update this bus."}), 404
+            return {"error": "Bus not found or you do not have permission to update this bus."}, 404
 
         data = request.get_json()
         if 'cost_per_seat' not in data:
-            return jsonify({"error": "Cost per seat is required."}), 400
+            return {"error": "Cost per seat is required."}, 400
 
         bus.cost_per_seat = data['cost_per_seat']
         db.session.commit()
 
-        return jsonify({"message": "Cost per seat updated successfully."}), 200
+        return {"message": "Cost per seat updated successfully."}, 200
 
 class GetBusesByDriver(Resource):
     @jwt_required()
@@ -285,9 +285,9 @@ class GetBusesByDriver(Resource):
         buses = Bus.query.filter_by(driver_id=current_driver_id).all()
 
         if not buses:
-            return jsonify({"message": "No buses found for this driver."}), 404
+            return {"message": "No buses found for this driver."}, 404
 
-        return jsonify([bus.to_dict() for bus in buses]), 200
+        return [bus.to_dict() for bus in buses], 200
 
 class GetScheduledBuses(Resource):
     @jwt_required()
@@ -323,4 +323,3 @@ driver_api.add_resource(Signup, "/signup")
 driver_api.add_resource(Login, "/login")
 driver_api.add_resource(ProtectedResource, "/protected")
 driver_api.add_resource(GetScheduledBuses, "/scheduled_buses")
-
