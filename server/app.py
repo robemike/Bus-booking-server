@@ -17,6 +17,7 @@ load_dotenv()
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_restful import Api
 
+
 app = Flask(__name__)
 CORS(app)
 
