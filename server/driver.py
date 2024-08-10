@@ -1,10 +1,9 @@
 from flask import Blueprint, request,jsonify
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from models import Driver, db,Bus,Schedule
+from .models import Driver, db,Bus,Schedule
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,jwt_required,get_jwt_identity
-# from flask_swagger_ui import get_swaggerui_blueprint
-from datetime import date,time,datetime
+from datetime import time,datetime
 
 
 driver_bp = Blueprint("driver_bp", __name__, url_prefix="/drivers/auth")

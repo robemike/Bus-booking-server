@@ -1,8 +1,8 @@
 import random
 from flask_jwt_extended import JWTManager,get_jwt,jwt_required,get_jwt_identity
 from flask_cors import CORS
-from customers import customer_bp,bcrypt as customer_bcrypt
-from driver import driver_bp,bcrypt as driver_bcrypt
+from .customers import customer_bp,bcrypt as customer_bcrypt
+from .driver import driver_bp,bcrypt as driver_bcrypt
 from datetime import timedelta,date,datetime
 from flask import Flask,jsonify,request
 from flask_migrate import Migrate
@@ -12,7 +12,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 from flask_swagger_ui import get_swaggerui_blueprint
-from models import db,Bus,Schedule,Customer,Booking,Driver
+from .models import db,Bus,Schedule,Customer,Booking,Driver
 from flask_restful import Api
 
 app = Flask(__name__)
