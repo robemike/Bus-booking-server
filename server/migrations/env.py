@@ -4,9 +4,6 @@ from logging.config import fileConfig
 from flask import current_app
 
 from alembic import context
-from app import app, db 
-from models import Booking,Bus,Driver,Customer # Update to import your app and db
-
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

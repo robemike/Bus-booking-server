@@ -1,21 +1,24 @@
 import random
 from flask_jwt_extended import JWTManager,get_jwt,jwt_required,get_jwt_identity
 from flask_cors import CORS
-from .customers import customer_bp,bcrypt as customer_bcrypt
-from .driver import driver_bp,bcrypt as driver_bcrypt
+from customers import customer_bp,bcrypt as customer_bcrypt
+from driver import driver_bp,bcrypt as driver_bcrypt
+from admin import admin_bp,bcrypt as admin_bcrypt
+from models import db,Bus,Schedule,Customer,Booking,Driver
 from datetime import timedelta,date,datetime
 from flask import Flask,jsonify,request
 from flask_migrate import Migrate
+from flask_bcrypt import Bcrypt
 # from mpesa import mpesa_client
 from datetime import date
 import os
 from dotenv import load_dotenv
 load_dotenv()
 from flask_swagger_ui import get_swaggerui_blueprint
-from .models import db,Bus,Schedule,Customer,Booking,Driver
 from flask_restful import Api
 
 app = Flask(__name__)
+CORS(app)
 
 #Swagger
 SWAGGER_URL = '/swagger/'  
@@ -36,9 +39,8 @@ app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 def swagger_view():
     return app.send_static_file('swagger.json')
 
-CORS(app)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URI')
-# app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///bus_booking.db'
+# app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URI')
+app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///bus_booking.db'
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "fsbdgfnhgvjnvhmvh"+str(
     random.randint(1,1000000000000))
@@ -49,6 +51,8 @@ app.config["JWT_BLACKLIST_TOKEN_CHECKS"] = ["access", "refresh"]
 app.json.compact = False
 jwt = JWTManager(app)
 driver_api = Api(driver_bp)
+bcrypt = Bcrypt(app)
+
 
 # Logout
 BLACKLIST = set()
@@ -64,18 +68,27 @@ def logout():
     return jsonify({"success":"Successfully logged out"}), 200
 
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    response = {
+        "error": str(e)
+    }
+    return jsonify(response), 500
 
 
 migrate = Migrate(app, db)
 db.init_app(app)
 customer_bcrypt.init_app(app)  
 driver_bcrypt.init_app(app)
+
+
 jwt = JWTManager(app)
 
 
 # Register blueprints
 app.register_blueprint(customer_bp)
 app.register_blueprint(driver_bp)  
+app.register_blueprint(admin_bp)
 
 
 #Routes
@@ -109,42 +122,11 @@ def get_buses():
     return jsonify([customer.to_dict() for customer in customers]),200
 
 
-#Get Drivers
-@app.route('/drivers', methods=['GET'], endpoint='view_drivers')
-def get_scheduled_bus():
-    drivers = Driver.query.all()
-    if not drivers:
-        return jsonify({"message": "No Driver found."}), 404
-    return jsonify([{
-                'id': driver.id,
-                'firstname': driver.firstname,
-                'lastname': driver.lastname,
-                'license_number': driver.license_number,
-                'experience_years': driver.experience_years,
-                'phone_number': driver.phone_number,
-                'email':driver.email
-            } for driver in drivers]), 200
-
-
-@app.route('/drivers/<int:driver_id>', methods=['GET'])
-def get_driver(driver_id):
-    driver = Driver.query.get(driver_id)
-    
-    if not driver:
-        return {"message": "Driver not found."}, 404
-    return jsonify({
-        'id': driver.id,
-        'firstname': driver.firstname,
-        'lastname': driver.lastname,
-        'license_number': driver.license_number,
-        'experience_years': driver.experience_years,
-        'phone_number': driver.phone_number,
-        'email': driver.email
-    }), 200
 
 
 #Buses
 @app.route('/buses', methods=['GET'], endpoint='view_buses')
+@jwt_required()
 def get_buses():
     buses = Bus.query.all()
     if not buses:
@@ -160,134 +142,9 @@ def get_buses():
         'number_plate': bus.number_plate,
     } for bus in buses]), 200
 
-@app.route('/buses/<int:bus_id>', methods=['GET'], endpoint='view_buses_by_id')
-def get_buses_by_id(bus_id):
-    bus = Bus.query.filter_by(id=bus_id).first()  
-
-    if not bus:
-        return jsonify({"message": "No buses found."}), 404
-
-    return jsonify({
-        'id': bus.id,
-        'username': bus.username,
-        'cost_per_seat': bus.cost_per_seat,
-        'number_of_seats': bus.number_of_seats,
-        'route': bus.route,
-        'travel_time': bus.travel_time.isoformat(),
-        'number_plate': bus.number_plate,
-    }), 200
 
 
-# Get buses by driver
-@app.route('/buses/driver/<int:driver_id>', methods=['GET'])
-def get_buses_by_driver(driver_id):
-    buses = Bus.query.filter_by(driver_id=driver_id).all()
-    
-    if not buses:
-        return jsonify({"message": "No buses found for this driver."}), 404
-
-    return jsonify([{
-        'id': bus.id,
-        'username': bus.username,
-        'cost_per_seat': bus.cost_per_seat,
-        'number_of_seats': bus.number_of_seats,
-        'route': bus.route,
-        'travel_time': bus.travel_time.isoformat() if bus.travel_time else None,
-        'number_plate': bus.number_plate
-    } for bus in buses]), 200  # Added status code 200
-
-
-@app.route('/buses', methods=['POST'], endpoint='add_bus_on_availability')
-def add_buses():
-    data=request.get_json()
-
-    required_fields=['username','cost_per_seat','number_of_seats','route','travel_time','number_plate','driver_id']
-   
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'message': f'Missing required field: {field}'}),400
-
-    new_bus=Bus(username=data['username'],
-                driver_id=data['driver_id'],
-                cost_per_seat=data['cost_per_seat'],
-                number_of_seats=data['number_of_seats'],
-                route=data['route'],
-                travel_time=data['travel_time'],
-                number_plate=data['number_plate']
-    )
-    db.session.add(new_bus)
-    db.session.commit()
-
-    return jsonify({'message': 'Bus created successfully'}), 201
-
-@app.route('/bus/<int:bus_id>',methods=['DELETE'],endpoint='delete_bus')
-def delete_buses(bus_id):
-    bus=Bus.query.get(bus_id)
-    if bus:
-        db.session.delete(bus)
-        db.session.commit()
-        return jsonify({'message': 'Bus deleted successfully'}), 200
-       
-    else:
-        return jsonify({'message': 'Bus not found'}), 404
-
-
-#Scheduled Bus
-@app.route('/scheduled_bus', methods=['GET'], endpoint='view_scheduled_bus')
-def get_scheduled_bus():
-    scheduled_buses = Schedule.query.all()
-    if not scheduled_buses:
-        return jsonify({"message": "No scheduled buses found."}), 404
-
-    return jsonify([{
-        'id': scheduled_bus.id,
-        'bus_id': scheduled_bus.bus_id,
-        'departure_time': scheduled_bus.departure_time.isoformat() if scheduled_bus.departure_time else None,
-        'arrival_time': scheduled_bus.arrival_time.isoformat() if scheduled_bus.arrival_time else None,
-        'travel_date': scheduled_bus.travel_date.isoformat() if scheduled_bus.travel_date else None,
-        'available_seats': scheduled_bus.available_seats,
-        'occupied_seats': scheduled_bus.occupied_seats
-    
-    } for scheduled_bus in scheduled_buses]), 200
-
-
-
-@app.route('/scheduled_bus', methods=['POST'], endpoint='add_scheduled_bus')
-def create_schedule_buses():
-    data = request.get_json()
-
-    required_fields = ['departure_time', 'arrival_time', 'travel_date', 'available_seats', 'occupied_seats']
-
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'message': f'Missing required field: {field}'}), 400
-
-   
-    try:
-        travel_date = datetime.strptime(data['travel_date'], '%Y-%m-%d').date()
-    except ValueError:
-        return jsonify({'message': 'Invalid travel_date format, expected YYYY-MM-DD'}), 400
-
-    
-    try:
-        departure_time = datetime.combine(travel_date, datetime.strptime(data['departure_time'], '%H:%M:%S').time())
-        arrival_time = datetime.combine(travel_date, datetime.strptime(data['arrival_time'], '%H:%M:%S').time())
-    except ValueError:
-        return jsonify({'message': 'Invalid time format, expected HH:MM:SS'}), 400
-
-    new_schedule = Schedule(
-        departure_time=departure_time,  
-        arrival_time=arrival_time,       
-        travel_date=travel_date,          
-        available_seats=data['available_seats'],
-        occupied_seats=data['occupied_seats'],
-        bus_id=data['bus_id']
-    )
-
-    db.session.add(new_schedule)
-    db.session.commit()
-
-    return jsonify({'message': 'Scheduled Bus created successfully'}), 201
+#Schedule Bus
 
 @app.route('/scheduled_bus/<int:bus_id>', methods=['PUT'], endpoint='updated_schedule')
 def update_schedule(bus_id):
@@ -345,105 +202,8 @@ def get_ticket_by_id(ticket_id):
 
 
 
-#Update the Bus Price per seat
-@app.route("/drivers/auth/buses/<int:bus_id>/cost", methods=["GET"])
-@jwt_required()  # Require JWT for this route
-def get_bus_cost(bus_id):
-    """Get the cost per seat of a bus
-    ---
-    parameters:
-      - name: bus_id
-        in: path
-        required: true
-        type: integer
-    responses:
-      200:
-        description: Cost per seat retrieved successfully
-      404:
-        description: Bus not found
-    """
-    current_driver_id = get_jwt_identity()  
-    bus = Bus.query.filter_by(id=bus_id, driver_id=current_driver_id).first()  
 
-    if not bus:
-        return jsonify({"error": "Bus not found."}), 404
-    
-    return jsonify({
-        'id': bus.id,
-        'username': bus.username,
-        'cost_per_seat': bus.cost_per_seat,
-        'number_of_seats': bus.number_of_seats,
-        'route': bus.route,
-        'travel_time': bus.travel_time.isoformat(),
-        'number_plate': bus.number_plate,
-    }), 200
 
-@app.route("/drivers/auth/buses/cost", methods=["POST"])
-@jwt_required()  
-def add_bus_cost():
-    """Add a new bus with its cost per seat
-    ---
-    parameters:
-      - name: body
-        in: body
-        required: true
-        schema:
-          type: object
-          properties:
-            username:
-              type: string
-            cost_per_seat:
-              type: number
-            number_of_seats:
-              type: integer
-            route:
-              type: string
-            travel_time:
-              type: string
-              format: date-time  # Ensure proper date-time format
-            number_plate:
-              type: string
-    responses:
-      201:
-        description: Bus created successfully
-      400:
-        description: Error with missing fields or invalid data
-    """
-    current_driver_id = get_jwt_identity()  
-    print(f"Current Driver ID: {current_driver_id}")  
-
-    if current_driver_id is None:
-        return jsonify({"error": "Driver not authenticated."}), 403  
-
-    data = request.get_json()
-
-    required_fields = ['username', 'cost_per_seat', 'number_of_seats', 'route', 'travel_time', 'number_plate']
-    missing_fields = [field for field in required_fields if field not in data]
-
-    if missing_fields:
-        return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
-
-    try:
-        new_bus = Bus(
-            username=data['username'],
-            cost_per_seat=float(data['cost_per_seat']),
-            number_of_seats=data['number_of_seats'],
-            route=data['route'],
-            travel_time=data['travel_time'],  
-            number_plate=data['number_plate'],
-            driver_id=current_driver_id  
-        )
-        
-        db.session.add(new_bus)
-        db.session.commit()
-
-    except ValueError as ve:
-        return jsonify({"error": "Invalid data provided.", "details": str(ve)}), 400
-    except Exception as e:
-        db.session.rollback()  
-        return jsonify({"error": "Failed to create bus.", "details": str(e)}), 500
-
-    return jsonify({"message": "Bus created successfully.", "bus_id": new_bus.id}), 201
 
 
 if __name__ == "__main__":

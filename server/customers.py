@@ -1,11 +1,11 @@
 from flask import Blueprint, request
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Customer, Booking, db, Schedule
+from models import Customer, Booking, db
+from datetime import datetime
 from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required
 
 
-# Create a blueprint for authentication
 customer_bp = Blueprint("customer_bp", __name__, url_prefix="/")
 bcrypt = Bcrypt()
 jwt = JWTManager()
@@ -15,7 +15,7 @@ class ProtectedResource(Resource):
     @jwt_required()
     def get(self):
         current_user = get_jwt_identity() 
-        return {"message": f"Hello, user {current_user}"}
+        return {"message": f"Hello, Customer {current_user}"}
 
 class Signup(Resource):
     def post(self):
@@ -57,9 +57,10 @@ class Signup(Resource):
                 firstname=firstname,
                 lastname=lastname,
                 email=email,
+                address=data["address"],
                 password=hashed_password,
                 phone_number=data["phone_number"],
-                ID_or_Passport=data["id_or_passport"],
+                id_or_passport=data["id_or_passport"],
             )
         except KeyError as e:
             return {"error": f"Missing required field: {e}"}, 400
@@ -101,16 +102,20 @@ class Login(Resource):
             return {"error": "Invalid login credentials"}, 401
 
 
-class RefreshToken(Resource):
-    def post(self):
-        @jwt_required(refresh=True)
-        def refresh():
-            current_user = get_jwt_identity()
-            new_access_token = create_access_token(identity=current_user)
-            return {"new_access_token": new_access_token}, 200
+# class RefreshToken(Resource):
+#     def post(self):
+#         @jwt_required(refresh=True)
+#         def refresh():
+#             current_user = get_jwt_identity()
+#             new_access_token = create_access_token(identity=current_user)
+#             return {"new_access_token": new_access_token}, 200
 
-        return refresh()
+#         return refresh()
     
+
+
+
+
 
 class Bookings(Resource):
     @jwt_required()
@@ -121,11 +126,10 @@ class Bookings(Resource):
             return {"error": "No input data provided."}, 400
         
         required_fields = [
-            "departure",
-            "to",
+            "departure_time", 
+            "current_address",
             "number_of_seats",
-            "scheduled_bus_id",
-            "total_cost"
+            "destination" 
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
@@ -135,30 +139,26 @@ class Bookings(Resource):
             }, 400
         
         customer_id = get_jwt_identity()
-        departure = data.get('departure')
-        destination = data.get('to')
-        scheduled_bus_id = data.get('scheduled_bus_id')
+        departure_time_str = data.get('departure_time')
+        destination = data.get('to')  # Update to match your input
         number_of_seats = data.get('number_of_seats')
-        total_cost = data.get('total_cost')
+        address = data.get('address')
 
-        scheduled_bus = Schedule.query.get(scheduled_bus_id)
-        if not scheduled_bus:
-            return {"error": "Scheduled bus not found."}, 404
-        
-        if scheduled_bus.available_seats < number_of_seats:
-            return {"error": "Not enough seats available."}, 400
-        
+        # Convert departure_time from string to a time object
+        try:
+            departure_time = datetime.strptime(departure_time_str, "%H:%M:%S").time()
+        except ValueError:
+            return {"error": "Invalid time format. Use HH:MM:SS."}, 400
+
         try:
             new_booking = Booking(
-                departure=departure,
-                to=destination,
+                departure_time=departure_time,
+                destination=destination,
                 customer_id=customer_id,
-                scheduled_bus_id=scheduled_bus_id,
                 number_of_seats=number_of_seats,
-                total_cost=total_cost
+                current_address=address  # Update to use the correct field
             )
             db.session.add(new_booking)
-            scheduled_bus.available_seats -= number_of_seats
             db.session.commit()
             return {"message": "Booking created successfully.", "booking_id": new_booking.id}, 201
         except Exception as e:
@@ -173,7 +173,7 @@ class Bookings(Resource):
         if not booking:
             return {"error": "Booking not found."}, 404
         
-        if booking.customer_id!= customer_id:
+        if booking.customer_id != customer_id:
             return {"error": "You don't have permission to delete this booking."}, 403
         
         try:
@@ -189,10 +189,12 @@ class Bookings(Resource):
         customer_id = get_jwt_identity()
 
         bookings = Booking.query.filter_by(customer_id=customer_id).all()
-        return [booking.serialize() for booking in bookings]
+        return [booking.serialize() for booking in bookings]  # Ensure serialize method exists
+
 
 
 customer_api.add_resource(Signup, "/signup")
 customer_api.add_resource(Login, "/login")
-customer_api.add_resource(RefreshToken, "/refresh")
+# customer_api.add_resource(RefreshToken, "/refresh")
+customer_api.add_resource(ProtectedResource, "/protected")
 customer_api.add_resource(Bookings, "/bookings", "/bookings/<int:booking_id>")
