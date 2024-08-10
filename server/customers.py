@@ -1,7 +1,7 @@
 from flask import Blueprint, request
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Customer, Booking, db
+from models import Customer, Booking, db,Bus
 from datetime import datetime
 from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required
 
@@ -112,12 +112,40 @@ class Login(Resource):
 
 #         return refresh()
     
+class ViewBookings(Resource):
+    @jwt_required()
+    def get(self):
+        """Retrieve all bookings for the authenticated customer.
+        ---
+        responses:
+          200:
+            description: A list of bookings for the customer
+          404:
+            description: No bookings found
+        """
+        customer_id = get_jwt_identity()  # Get the current customer's ID
 
+        # Query the database for bookings associated with this customer
+        bookings = Booking.query.filter_by(customer_id=customer_id).all()
 
+        if not bookings:
+            return {"message": "No bookings found."}, 404
 
+        # Return the list of bookings
+        return [{
+            'id': booking.id,
+            'customer_id': booking.customer_id,
+            'bus_id': booking.bus_id,
+            'booking_date': booking.booking_date.isoformat(),
+            'number_of_seats': booking.number_of_seats,
+            'total_cost': booking.total_cost,
+            'destination': booking.destination,
+            'departure_time': str(booking.departure_time),
+            'current_address': booking.current_address
 
-
-class Bookings(Resource):
+        } for booking in bookings], 200
+    
+class AddBookings(Resource):
     @jwt_required()
     def post(self):
         data = request.get_json()
@@ -129,7 +157,8 @@ class Bookings(Resource):
             "departure_time", 
             "current_address",
             "number_of_seats",
-            "destination" 
+            "destination", 
+            "bus_id"  
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
@@ -140,9 +169,10 @@ class Bookings(Resource):
         
         customer_id = get_jwt_identity()
         departure_time_str = data.get('departure_time')
-        destination = data.get('to')  # Update to match your input
+        destination = data.get('destination')
         number_of_seats = data.get('number_of_seats')
-        address = data.get('address')
+        current_address = data.get('current_address')
+        bus_id = data.get('bus_id')  # Retrieve bus_id from request data
 
         # Convert departure_time from string to a time object
         try:
@@ -150,13 +180,21 @@ class Bookings(Resource):
         except ValueError:
             return {"error": "Invalid time format. Use HH:MM:SS."}, 400
 
+        bus = Bus.query.get(bus_id)
+        if not bus:
+            return {"error": "Bus not found."}, 404
+
+        total_cost = bus.cost_per_seat * number_of_seats
+
         try:
             new_booking = Booking(
                 departure_time=departure_time,
                 destination=destination,
                 customer_id=customer_id,
                 number_of_seats=number_of_seats,
-                current_address=address  # Update to use the correct field
+                current_address=current_address,
+                bus_id=bus_id, 
+                total_cost=total_cost  
             )
             db.session.add(new_booking)
             db.session.commit()
@@ -165,36 +203,11 @@ class Bookings(Resource):
             db.session.rollback()
             return {"error": str(e)}, 500
         
-    @jwt_required()
-    def delete(self, booking_id):
-        customer_id = get_jwt_identity()
-
-        booking = Booking.query.get_or_404(booking_id)
-        if not booking:
-            return {"error": "Booking not found."}, 404
-        
-        if booking.customer_id != customer_id:
-            return {"error": "You don't have permission to delete this booking."}, 403
-        
-        try:
-            db.session.delete(booking)
-            db.session.commit()
-            return {"message": "Booking deleted successfully."}, 200
-        except Exception as e:
-            db.session.rollback()
-            return {"error": str(e)}, 500
-        
-    @jwt_required()
-    def get(self):
-        customer_id = get_jwt_identity()
-
-        bookings = Booking.query.filter_by(customer_id=customer_id).all()
-        return [booking.serialize() for booking in bookings]  # Ensure serialize method exists
-
 
 
 customer_api.add_resource(Signup, "/signup")
 customer_api.add_resource(Login, "/login")
 # customer_api.add_resource(RefreshToken, "/refresh")
 customer_api.add_resource(ProtectedResource, "/protected")
-customer_api.add_resource(Bookings, "/bookings", "/bookings/<int:booking_id>")
+customer_api.add_resource(AddBookings, "/bookings",)
+customer_api.add_resource(ViewBookings, '/view_bookings')

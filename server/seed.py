@@ -1,4 +1,4 @@
-from datetime import date,timedelta
+from datetime import date,timedelta,time
 from app import db,app  
 from models import Customer, Bus, Schedule, Booking, Driver, Admin
 from faker import Faker
@@ -39,15 +39,20 @@ def seed_data():
             email=fake.unique.email(),
             password=fake.password(),
             address=fake.address(),
-            phone_number=fake.phone_number(),
+            phone_number=phone_number,
             id_or_passport=str(fake.unique.random_int(min=100000000, max=999999999))
         )
         customers.append(customer)
 
-    db.session.add_all(customers)
-    db.session.commit()
-    print(f"Seeded {len(customers)} customers.")
+    try:
+        db.session.add_all(customers)
+        db.session.commit()
+        print(f"Seeded {len(customers)} customers.")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error seeding customers: {str(e)}")
 
+        
     drivers = []
     for _ in range(2):
         driver = Driver(
@@ -75,14 +80,14 @@ def seed_data():
         travel_date = date.today() + timedelta(days=fake.random_int(min=1, max=30))
 
         bus = Bus(
-            username=fake.company(),
-            driver_id=drivers[i].id,  # Ensure this driver exists in the database
-            cost_per_seat=fake.random_int(min=100, max=200),
-            number_of_seats=fake.random_int(min=30, max=50),
-            route=fake.street_name(),
-            travel_time=travel_date,  # Set the valid travel date here
-            number_plate=validated_number_plate  
-        )
+        username=fake.company(),
+        driver_id=drivers[i].id,
+        cost_per_seat=fake.random_int(min=100, max=200),
+        number_of_seats=fake.random_int(min=30, max=50),
+        route=fake.street_name(),
+        travel_time=time(hour=14, minute=30),  # Adjust this as necessary
+        number_plate=validated_number_plate  
+)
         print(f"Creating bus with number_plate: {bus.number_plate}")
         buses.append(bus)
 

@@ -1,11 +1,11 @@
 import random
 from flask_jwt_extended import JWTManager,get_jwt,jwt_required,get_jwt_identity
 from flask_cors import CORS
-from .customers import customer_bp,bcrypt as customer_bcrypt
-from .driver import driver_bp,bcrypt as driver_bcrypt
-from .admin import admin_bp,bcrypt as admin_bcrypt
-from .models import db,Bus,Schedule,Customer,Booking,Driver
-from datetime import timedelta,date,datetime
+from customers import customer_bp,bcrypt as customer_bcrypt
+from driver import driver_bp,bcrypt as driver_bcrypt
+from admin import admin_bp,bcrypt as admin_bcrypt
+from models import db,Bus,Schedule,Customer,Booking
+from datetime import timedelta,date
 from flask import Flask,jsonify,request
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
@@ -40,8 +40,8 @@ app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 def swagger_view():
     return app.send_static_file('swagger.json')
 
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URI')
-# app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///bus_booking.db'
+# app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URI')
+app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///bus_booking.db'
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "fsbdgfnhgvjnvhmvh"+str(
     random.randint(1,1000000000000))
