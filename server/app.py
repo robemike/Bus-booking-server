@@ -4,7 +4,7 @@ from flask_cors import CORS
 from .customers import customer_bp,bcrypt as customer_bcrypt
 from .driver import driver_bp,bcrypt as driver_bcrypt
 from .admin import admin_bp,bcrypt as admin_bcrypt
-from models import db,Bus,Schedule,Customer,Booking,Driver
+from .models import db,Bus,Schedule,Customer,Booking,Driver
 from datetime import timedelta,date,datetime
 from flask import Flask,jsonify,request
 from flask_migrate import Migrate
