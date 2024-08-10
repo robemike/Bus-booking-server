@@ -115,7 +115,7 @@ class Booking(db.Model, SerializerMixin):
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     booking_date = db.Column(db.Date, default=datetime.utcnow)
     number_of_seats = db.Column(db.Integer, nullable=False)
-    # total_cost = db.Column(db.Float)
+    total_cost = db.Column(db.Float)
     destination = db.Column(db.String, nullable=False) 
     departure_time = db.Column(db.Time, nullable=False)
     current_address=db.Column(db.String, nullable=False)
