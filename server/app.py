@@ -126,8 +126,7 @@ def get_buses():
 
 
 #Buses
-@app.route('/buses', methods=['GET'], endpoint='view_buses')
-@jwt_required()
+@app.route('/view_buses', methods=['GET'], endpoint='view_buses')
 def get_buses():
     buses = Bus.query.all()
     if not buses:
@@ -144,29 +143,6 @@ def get_buses():
     } for bus in buses]), 200
 
 
-
-#Schedule Bus
-
-@app.route('/scheduled_bus/<int:bus_id>', methods=['PUT'], endpoint='updated_schedule')
-def update_schedule(bus_id):
-    data = request.get_json()
-    scheduled_buses = Schedule.query.get(bus_id)
-    if  scheduled_buses:
-        scheduled_buses.depature_time = data['depature_time']
-        scheduled_buses.arrival_time = data['arrival_time']
-        scheduled_buses.travel_date =  data['travel_date']
-        scheduled_buses.available_seats =  data['available_seats']
-        scheduled_buses.occupied_seats =  data['occupied_seats']
-
-        if 'travel_date' in data:
-            scheduled_buses.travel_date = date.fromisoformat(data['travel_date'])
-        else:
-            scheduled_buses.travel_date = None
-
-        db.session.commit()
-        return jsonify({'message': 'Schedule updated successfully'}), 200
-    else:
-        return jsonify({'message': 'Schedule not found'}), 404
     
 #Tickets
 @app.route('/tickets', methods=['GET'],endpoint='view_tickets')
@@ -174,11 +150,12 @@ def get_tickets():
     tickets=Booking.query.all()
     return jsonify([{
             'id': ticket.id,
-            'username': ticket.username,
             'booking_date': ticket.booking_date,
             'number_of_seats': ticket.number_of_seats,
-            'route': ticket.route,
-            'total_cost':ticket.total_cost
+            'total_cost':ticket.total_cost,
+            'destination':ticket.destination
+            # 'departure_time':ticket.departure_time
+            
             
         } for ticket in tickets]),200
 
@@ -193,12 +170,12 @@ def get_ticket_by_id(ticket_id):
         return jsonify({"message": "No ticket found for this ID."}), 404
     
     return jsonify({
-        'id': ticket.id,
-        'username': ticket.username,
-        'booking_date': ticket.booking_date.isoformat(),  
-        'number_of_seats': ticket.number_of_seats,
-        'route': ticket.route,
-        'total_cost': ticket.total_cost
+
+            'id': ticket.id,
+            'booking_date': ticket.booking_date,
+            'number_of_seats': ticket.number_of_seats,
+            'total_cost':ticket.total_cost,
+            'destination':ticket.destination
     }), 200
 
 
