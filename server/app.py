@@ -140,6 +140,7 @@ def get_buses():
         'route': bus.route,
         'travel_time': bus.travel_time.isoformat(), 
         'number_plate': bus.number_plate,
+        'image':bus.image
     } for bus in buses]), 200
 
 

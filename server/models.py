@@ -55,7 +55,9 @@ class Bus(db.Model, SerializerMixin):
     route = db.Column(db.String, nullable=False)
     travel_time = db.Column(db.Time, nullable=False)
     number_plate = db.Column(db.String,unique=True)
+    image = db.Column(db.String) 
     driver = db.relationship('Driver', backref='buses')
+    
     
 
     driver = relationship("Driver", back_populates="buses",lazy='select')

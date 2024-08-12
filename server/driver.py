@@ -169,7 +169,7 @@ class RegisterBuses(Resource):
         if not data:
             return {"error": "No input data provided."}, 400
         
-        required_fields = ["username", "driver_id", "cost_per_seat", "number_of_seats", "route", "travel_time", "number_plate"]
+        required_fields = ["username", "driver_id", "cost_per_seat", "number_of_seats", "route", "travel_time", "number_plate","image"]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
         if missing_fields:
@@ -188,7 +188,8 @@ class RegisterBuses(Resource):
                 number_of_seats=data.get('number_of_seats'),
                 route=data.get('route'),
                 travel_time=travel_time, 
-                number_plate=data.get('number_plate')
+                number_plate=data.get('number_plate'),
+                image=data.get('image')
             )
             
             db.session.add(new_bus)
@@ -215,7 +216,8 @@ class ViewBusesByDriver(Resource):
                 'number_of_seats': bus.number_of_seats,
                 'route': bus.route,
                 'travel_time': bus.travel_time.isoformat() if bus.travel_time else None,
-                'number_plate': bus.number_plate
+                'number_plate': bus.number_plate,
+                'image':bus.image
             } for bus in buses
         ], 200
 
@@ -237,6 +239,7 @@ class ViewBusById(Resource):
             'route': bus.route,
             'travel_time': bus.travel_time.isoformat(),
             'number_plate': bus.number_plate,
+            'image':bus.image
         }), 200
 
 
@@ -256,7 +259,8 @@ class ViewBusesByDriver(Resource):
             'number_of_seats': bus.number_of_seats,
             'route': bus.route,
             'travel_time': bus.travel_time.isoformat() if bus.travel_time else None,
-            'number_plate': bus.number_plate
+            'number_plate': bus.number_plate,
+            'image':bus.image
         } for bus in buses], 200
 
 
