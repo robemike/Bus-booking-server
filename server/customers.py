@@ -12,7 +12,7 @@ jwt = JWTManager()
 customer_api = Api(customer_bp)
 
 class ProtectedResource(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         current_user = get_jwt_identity() 
         return {"message": f"Hello, Customer {current_user}"}
@@ -113,7 +113,7 @@ class Login(Resource):
 #         return refresh()
     
 class ViewBookings(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         """Retrieve all bookings for the authenticated customer.
         ---
@@ -146,7 +146,7 @@ class ViewBookings(Resource):
         } for booking in bookings], 200
     
 class AddBookings(Resource):
-    @jwt_required()
+    # @jwt_required()
     def post(self):
         data = request.get_json()
 

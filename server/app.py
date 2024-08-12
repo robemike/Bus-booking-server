@@ -1,15 +1,14 @@
 import random
-from flask_jwt_extended import JWTManager,get_jwt,jwt_required,get_jwt_identity
+from flask_jwt_extended import JWTManager,get_jwt,jwt_required
 from flask_cors import CORS
 from .customers import customer_bp,bcrypt as customer_bcrypt
 from .driver import driver_bp,bcrypt as driver_bcrypt
 from .admin import admin_bp,bcrypt as admin_bcrypt
-from .models import db,Bus,Schedule,Customer,Booking
+from .models import db,Bus,Customer,Booking
 from datetime import timedelta,date
 from flask import Flask,jsonify,request
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
-# from mpesa import mpesa_client
 from datetime import date
 import os
 from dotenv import load_dotenv
@@ -96,7 +95,8 @@ app.register_blueprint(admin_bp)
 # @app.route('/stk_push', methods=['GET'])
 # def stk_push():
 #     # Retrieve parameters from the request
-#     phone_number = request.args.get('phone_number') 
+#     phone_number = request.args.get('phone_number')
+    
 #     if not phone_number:
 #         return jsonify({"error": "Phone number is required"}), 400
 
@@ -109,7 +109,7 @@ app.register_blueprint(admin_bp)
 #         response = mpesa_client.stk_push(phone_number, amount, account_reference, transaction_desc, callback_url)
 #         return jsonify(response), 200
 #     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
+        # return jsonify({"error": str(e)}), 500
     
 #home
 @app.route("/")

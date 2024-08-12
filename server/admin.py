@@ -67,7 +67,7 @@ class AdminLogin(Resource):
             return {"error": "Invalid Admin credentials"}, 401
 
 class ViewDriverBuses(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         """Fetch all buses registered by the driver"""
         driver_id = get_jwt_identity() 
@@ -82,7 +82,7 @@ class ViewDriverBuses(Resource):
         } for bus in buses], 200
 
 class AddDriver(Resource):
-    @jwt_required()
+    # @jwt_required()
     def post(self):
         """Add a new driver"""
         data = request.get_json()
@@ -113,7 +113,7 @@ class AddDriver(Resource):
         return {"message": "Driver added successfully."}, 201
 
 class DeleteDriver(Resource):
-    @jwt_required()
+    # @jwt_required()
     def delete(self, driver_id):
         """Delete a driver"""
         driver = Driver.query.get(driver_id)
@@ -125,7 +125,7 @@ class DeleteDriver(Resource):
         return {"message": "Driver deleted successfully."}, 200
 
 class ViewCustomers(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         """View all registered customers"""
         customers = Customer.query.all()
@@ -141,7 +141,7 @@ class ViewCustomers(Resource):
 
 
 class ViewScheduledBuses(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         """View all scheduled buses"""
         try:
@@ -166,7 +166,7 @@ class ViewScheduledBuses(Resource):
             return {"error": str(e)}, 500
 
 class ViewDrivers(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         """Get all drivers
         ---
@@ -198,7 +198,7 @@ class ViewDrivers(Resource):
         } for driver in drivers], 200
     
 class ViewDriversByID(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self, driver_id):
         """Get driver by ID
         ---
@@ -237,7 +237,7 @@ class ViewDriversByID(Resource):
         }, 200
 
 class ViewBuses(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         """Get all buses
         ---
@@ -263,7 +263,7 @@ class ViewBuses(Resource):
     
 
 class ViewBusesByID(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self, bus_id):
         """Get bus by ID
         ---
