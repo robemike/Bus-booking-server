@@ -126,7 +126,7 @@ def get_buses():
 
 
 #Buses
-@app.route('/view_buses', methods=['GET'], endpoint='view_buses')
+@app.route('/buses', methods=['GET'], endpoint='view_buses')
 def get_buses():
     buses = Bus.query.all()
     if not buses:

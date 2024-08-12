@@ -85,8 +85,8 @@ import base64
 app = Flask(__name__)
 
 base_url = ''
-consumer_key = ''
-consumer_secret = ''
+consumer_key = 'cMWof2GKNdXjKZboQbbl7TfiMzTcyq3vz4OM8kc2xzPlltOb'
+consumer_secret = 'CGCDDMnfSezaXk485AiVCZtiqZOIs4ChLPAzr739m52xAtfP0RHvGnYuwjYQPdSt'
 
 
 @app.route('/mpesa')
@@ -225,8 +225,8 @@ def confirm():
 
 
 def _access_token():
-    consumer_key = consumer_key
-    consumer_secret = consumer_secret
+    consumer_key = 'cMWof2GKNdXjKZboQbbl7TfiMzTcyq3vz4OM8kc2xzPlltOb'
+    consumer_secret = 'CGCDDMnfSezaXk485AiVCZtiqZOIs4ChLPAzr739m52xAtfP0RHvGnYuwjYQPdSt'
     endpoint = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
 
     r = requests.get(endpoint, auth=HTTPBasicAuth(consumer_key, consumer_secret))

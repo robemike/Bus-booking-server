@@ -6,7 +6,7 @@ from flask_jwt_extended import JWTManager, create_access_token, create_refresh_t
 from datetime import datetime
 
 
-driver_bp = Blueprint("driver_bp", __name__, url_prefix="/drivers/auth")
+driver_bp = Blueprint("driver_bp", __name__, url_prefix="/")
 bcrypt = Bcrypt()
 jwt = JWTManager()
 driver_api = Api(driver_bp)

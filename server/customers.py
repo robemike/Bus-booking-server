@@ -6,7 +6,7 @@ from datetime import datetime
 from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required
 
 
-customer_bp = Blueprint("customer_bp", __name__, url_prefix="/auth")
+customer_bp = Blueprint("customer_bp", __name__, url_prefix="/")
 bcrypt = Bcrypt()
 jwt = JWTManager()
 customer_api = Api(customer_bp)
