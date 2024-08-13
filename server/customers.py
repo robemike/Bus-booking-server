@@ -1,7 +1,7 @@
 from flask import Blueprint, request,make_response
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Customer, Booking, db,Bus
+from models import Customer, Booking, db,Bus
 from datetime import datetime
 from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required
 
@@ -196,7 +196,51 @@ class AddBookings(Resource):
             db.session.rollback()
             return {"error": str(e)}, 500
         
+class UpdateBooking(Resource):
+    def put(self, booking_id):
+        """Update a booking by ID."""
+        data = request.get_json()
+        bus_id = data.get('bus_id')  # Ensure this is provided and valid
+        # Validate bus_id
+        if bus_id is None:
+            return {"message": "bus_id is required."}, 400
 
+        booking = Booking.query.get(booking_id)
+        if not booking:
+            return {"message": "Booking not found."}, 404
+
+        booking.bus_id = bus_id  # Make sure bus_id is valid
+        # Update other fields as needed
+        db.session.commit()
+
+        return {"message": "Booking updated successfully."}, 200
+class DeleteBooking(Resource):
+    def delete(self, booking_id):
+        """Delete a booking by its ID.
+        ---
+        parameters:
+          - name: booking_id
+            in: path
+            type: integer
+            required: true
+            description: The ID of the booking to delete
+        responses:
+          200:
+            description: Booking successfully deleted
+          404:
+            description: Booking not found
+        """
+        # Query the database for the booking associated with the provided ID
+        booking = Booking.query.get(booking_id)
+
+        if not booking:
+            return {"message": "Booking not found."}, 404
+
+        # Delete the booking
+        db.session.delete(booking)
+        db.session.commit()
+
+        return {"message": "Booking successfully deleted."}, 200
 
 customer_api.add_resource(Signup, "/signup")
 customer_api.add_resource(Login, "/login")
@@ -204,3 +248,5 @@ customer_api.add_resource(Login, "/login")
 customer_api.add_resource(ProtectedResource, "/protected")
 customer_api.add_resource(AddBookings, "/bookings",)
 customer_api.add_resource(ViewBookings, '/view_bookings')
+customer_api.add_resource(UpdateBooking, '/update_bookings')
+customer_api.add_resource(DeleteBooking, '/delete_booking/<int:booking_id>')

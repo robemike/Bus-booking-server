@@ -85,6 +85,7 @@ class Schedule(db.Model, SerializerMixin):
     available_seats = db.Column(db.Integer, nullable=False)
     occupied_seats = db.Column(db.Integer, nullable=False)
 
+    serialize_only = ('id', 'bus_id', 'departure_time', 'arrival_time', 'travel_date', 'available_seats', 'occupied_seats')
 
     bus = db.relationship("Bus", back_populates="schedules")
 
