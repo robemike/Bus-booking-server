@@ -188,8 +188,9 @@ class RegisterBuses(Resource):
                 number_of_seats=data.get('number_of_seats'),
                 route=data.get('route'),
                 travel_time=travel_time, 
-                number_plate=data.get('number_plate'),
+                number_plate='KAW 451C',
                 image=data.get('image')
+
             )
             
             db.session.add(new_bus)
@@ -379,6 +380,21 @@ class ScheduledBuses(Resource):
         except Exception as e:
             db.session.rollback()
             return {"error": "Failed to create scheduled bus.", "details": str(e)}, 500
+        
+class DeleteSchedule(Resource):
+    @jwt_required()  # Protect this route if you want authentication
+    def delete(self, schedule_id):
+        # Fetch the schedule by ID
+        schedule = Schedule.query.get(schedule_id)
+
+        if not schedule:
+            return jsonify({"msg": "Schedule not found"}), 404
+
+        # Delete the schedule
+        db.session.delete(schedule)
+        db.session.commit()
+
+        return jsonify({"msg": "Schedule deleted successfully"}), 200
 
 #Bus Cost per Seat
 
@@ -513,6 +529,7 @@ driver_api.add_resource(ViewBusById, '/buses/<int:bus_id>')
 driver_api.add_resource(DeleteBus, '/bus/<int:bus_id>', endpoint='delete_bus')
 driver_api.add_resource(GetScheduledBuses, "/view_scheduled_buses")
 driver_api.add_resource(ScheduledBuses, "/schedule_buses")
+driver_api.add_resource(DeleteSchedule, "/delete_schedule_buses")
 driver_api.add_resource(ViewBusCost, '/buses/<int:bus_id>/cost', endpoint='get_bus_cost')
 driver_api.add_resource(AddBusCostByID, '/buses/<int:bus_id>/cost', endpoint='add_bus_cost_by_id')
 driver_api.add_resource(UpdateBusCostByID, '/buses/<int:bus_id>/cost', endpoint='update_bus_cost_by_id')

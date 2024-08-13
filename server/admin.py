@@ -176,12 +176,12 @@ class ViewDrivers(Resource):
           403:
             description: User is not an admin
         """
-        current_user_id = get_jwt_identity()  # Get the current user's identity
+        # current_user_id = get_jwt_identity()  # Get the current user's identity
 
         # Check if the current user is an admin by querying the Admin model
-        admin_user = Admin.query.get(current_user_id) 
-        if not admin_user:
-            return {"error": "User is not an admin"}, 403
+        # admin_user = Admin.query.get(current_user_id) 
+        # if not admin_user:
+        #     return {"error": "User is not an admin"}, 403
 
         drivers = Driver.query.all()  
         if not drivers:
@@ -259,6 +259,7 @@ class ViewBuses(Resource):
             'route': bus.route,
             'travel_time': bus.travel_time.isoformat(), 
             'number_plate': bus.number_plate,
+            'image':bus.image
         } for bus in buses], 200
     
 
