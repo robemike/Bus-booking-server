@@ -1,7 +1,7 @@
-from flask import Blueprint, request,jsonify
+from flask import Blueprint, request,jsonify,make_response
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Driver, db,Bus,Schedule,Customer
+from .models import Driver, db,Bus,Schedule,Customer,Seat
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,jwt_required,get_jwt_identity
 from datetime import datetime
 
@@ -189,7 +189,7 @@ class RegisterBuses(Resource):
                 route=data.get('route'),
                 travel_time=travel_time, 
                 number_plate=data.get('number_plate'),
-                image=data.get('image')
+                image=data.get('image'),                
 
             )
             
@@ -199,6 +199,21 @@ class RegisterBuses(Resource):
         except Exception as e:
             db.session.rollback()
             return {"error": str(e)}, 500
+        
+class AddSeat(Resource):
+    def post(self,bus_id):
+      bus=Bus.query.filter_by(id=bus_id).first()
+      seats = []
+      for seat_num in range(1, bus.number_of_seats + 1):
+          seat = Seat(
+              seat_number=f"S{seat_num:03}",  
+              bus_id=bus.id
+          )
+          seats.append(seat)
+      db.session.add_all(seats)
+      db.session.commit()
+
+      return make_response(bus.to_dict(),201)
 
 class ViewBusesByDriver(Resource):
     # @jwt_required()
@@ -218,7 +233,8 @@ class ViewBusesByDriver(Resource):
                 'route': bus.route,
                 'travel_time': bus.travel_time.isoformat() if bus.travel_time else None,
                 'number_plate': bus.number_plate,
-                'image':bus.image
+                'image':bus.image,
+                
             } for bus in buses
         ], 200
 
@@ -274,9 +290,9 @@ class DeleteBus(Resource):
         if bus:
             db.session.delete(bus)
             db.session.commit()
-            return jsonify({'message': 'Bus deleted successfully'}), 200
+            return ({'message': 'Bus deleted successfully'}), 200
         else:
-            return jsonify({'message': 'Bus not found'}), 404
+            return ({'message': 'Bus not found'}), 404
 
 
 #Scheduling Buses
@@ -539,6 +555,7 @@ driver_api.add_resource(Signup, "/signup")
 driver_api.add_resource(Login, "/login")
 driver_api.add_resource(ProtectedResource, "/protected")
 driver_api.add_resource(RegisterBuses, "/register/buses")
+driver_api.add_resource(AddSeat, "/seat/<int:bus_id>")
 driver_api.add_resource(ViewBusesByDriver, '/buses/driver/<int:driver_id>')
 driver_api.add_resource(ViewCustomers, '/customers')
 driver_api.add_resource(ViewBusById, '/buses/<int:bus_id>')

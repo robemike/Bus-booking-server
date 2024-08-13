@@ -153,12 +153,14 @@ class Seat(db.Model,SerializerMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     status=db.Column(db.String)
-    seat_number=db.Column(db.String)
+    seat_number=db.Column(db.String, default='available')
     bus_id=db.Column(db.Integer,db.ForeignKey('buses.id'), nullable=False)
     booking_id=db.Column(db.Integer,db.ForeignKey('bookings.id'))
 
     bus=db.relationship("Bus",back_populates="seats")
     bookings=db.relationship("Booking",back_populates="seats")
+
+    serialize_rules = ('-bus','-bookings')
 
 
 class Driver(db.Model, SerializerMixin):
@@ -204,9 +206,6 @@ class Driver(db.Model, SerializerMixin):
             raise ValueError("Email already exists")
         return email
 
-
-
-    
 
 class Admin(db.Model, SerializerMixin):
     __tablename__ = "admins"

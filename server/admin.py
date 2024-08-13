@@ -259,7 +259,8 @@ class ViewBuses(Resource):
             'route': bus.route,
             'travel_time': bus.travel_time.isoformat(), 
             'number_plate': bus.number_plate,
-            'image':bus.image
+            'image':bus.image,
+            'seats':bus.seats
         } for bus in buses], 200
     
 

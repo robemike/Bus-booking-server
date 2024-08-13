@@ -127,25 +127,12 @@ class ViewBookings(Resource):
 
         # Query the database for bookings associated with this customer
         bookings = Booking.query.filter_by(customer_id=customer_id).all()
-        print(bookings)
+
         if not bookings:
             return {"message": "No bookings found."}, 404
 
         # Return the list of bookings
-        # return [{
-        #     # 'id': booking.id,
-        #     # 'customer_id': booking.customer_id,
-        #     # 'bus_id': booking.bus_id,
-        #     # 'booking_date': booking.booking_date.isoformat(),
-        #     # 'number_of_seats': booking.number_of_seats,
-        #     # 'total_cost': booking.total_cost,
-        #     # 'destination': booking.destination,
-        #     # 'departure_time': booking.departure_time.strftime("%H:%M:%S"), 
-        #     # 'current_address': booking.current_address,
-        
-        # } for booking in bookings], 200
-        return make_response([booking.to_dict() for booking in bookings],200)
-    
+        return make_response({"bookings": [booking.to_dict() for booking in bookings]}, 200)
     
 class AddBookings(Resource):
     # @jwt_required()
@@ -160,7 +147,8 @@ class AddBookings(Resource):
             "current_address",
             "number_of_seats",
             "destination", 
-            "bus_id" 
+            "bus_id",
+            "selected_seats"
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
@@ -169,12 +157,14 @@ class AddBookings(Resource):
                 "error": f"Missing required fields: {', '.join(missing_fields)}"
             }, 400
         
-        customer_id = get_jwt_identity()
+        # customer_id = get_jwt_identity()
+        customer_id=1
         departure_time_str = data.get('departure_time')
         destination = data.get('destination')
         number_of_seats = data.get('number_of_seats')
         current_address = data.get('current_address')
-        bus_id = data.get('bus_id')  # Retrieve bus_id from request data
+        bus_id = data.get('bus_id')  
+        selected_seats=data.get('selected_seats')
 
         # Convert departure_time from string to a time object
         try:
@@ -196,7 +186,8 @@ class AddBookings(Resource):
                 number_of_seats=number_of_seats,
                 current_address=current_address,
                 bus_id=bus_id, 
-                total_cost=total_cost  
+                total_cost=total_cost,
+                selected_seats=selected_seats 
             )
             db.session.add(new_booking)
             db.session.commit()
