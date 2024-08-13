@@ -146,19 +146,18 @@ def get_buses():
 
     
 #Tickets
-@app.route('/tickets', methods=['GET'],endpoint='view_tickets')
+@app.route('/tickets', methods=['GET'], endpoint='view_tickets')
 def get_tickets():
-    tickets=Booking.query.all()
+    tickets = Booking.query.all()
     return jsonify([{
             'id': ticket.id,
             'booking_date': ticket.booking_date,
             'number_of_seats': ticket.number_of_seats,
-            'total_cost':ticket.total_cost,
-            'destination':ticket.destination
-            # 'departure_time':ticket.departure_time
-            
-            
-        } for ticket in tickets]),200
+            'total_cost': ticket.total_cost,
+            'destination': ticket.destination,
+            'departure_time': ticket.departure_time, 
+        } for ticket in tickets]), 200
+
 
 
 @app.route('/tickets/<int:ticket_id>', methods=['GET'], endpoint='view_tickets_by_id')
@@ -176,7 +175,8 @@ def get_ticket_by_id(ticket_id):
             'booking_date': ticket.booking_date,
             'number_of_seats': ticket.number_of_seats,
             'total_cost':ticket.total_cost,
-            'destination':ticket.destination
+            'destination':ticket.destination,
+            'departure_time': ticket.departure_time, 
     }), 200
 
 

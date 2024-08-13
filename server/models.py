@@ -70,6 +70,8 @@ class Bus(db.Model, SerializerMixin):
         if len(number_plate) != 8 :
             ValueError("Invalid number plate format")
 
+        return number_plate
+
 
 class Schedule(db.Model, SerializerMixin):
     __tablename__ = "schedules"

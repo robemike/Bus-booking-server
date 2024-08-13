@@ -4,7 +4,7 @@ from .models import Admin, Driver, Customer, Bus, Schedule, db
 from flask_jwt_extended import create_access_token, jwt_required,create_refresh_token, get_jwt_identity
 from flask_bcrypt import Bcrypt
 
-admin_bp = Blueprint('admin_bp', __name__, url_prefix='/admin')
+admin_bp = Blueprint('admin_bp', __name__, url_prefix='/')
 api = Api(admin_bp)
 bcrypt = Bcrypt()
 
@@ -323,6 +323,6 @@ api.add_resource(ViewDriverBuses, '/driver/buses')
 api.add_resource(AddDriver, '/drivers')
 api.add_resource(DeleteDriver, '/drivers/<int:driver_id>')
 api.add_resource(ViewCustomers, '/customers')
-api.add_resource(ViewBuses, '/buses', endpoint='view_buses')
+api.add_resource(ViewBuses, '/buses')
 api.add_resource(ViewBusesByID, '/buses/<int:bus_id>', endpoint='view_buses_by_id')
 api.add_resource(ViewScheduledBuses, '/scheduled_buses')
