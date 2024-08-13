@@ -1,10 +1,10 @@
 import random
 from flask_jwt_extended import JWTManager,get_jwt,jwt_required
 from flask_cors import CORS
-from .customers import customer_bp,bcrypt as customer_bcrypt
-from .driver import driver_bp,bcrypt as driver_bcrypt
-from .admin import admin_bp,bcrypt as admin_bcrypt
-from .models import db,Bus,Customer,Booking
+from customers import customer_bp,bcrypt as customer_bcrypt
+from driver import driver_bp,bcrypt as driver_bcrypt
+from admin import admin_bp,bcrypt as admin_bcrypt
+from models import db,Bus,Customer,Booking
 from datetime import timedelta,date
 from flask import Flask,jsonify,request
 from flask_migrate import Migrate
@@ -149,15 +149,24 @@ def get_buses():
 @app.route('/tickets', methods=['GET'], endpoint='view_tickets')
 def get_tickets():
     tickets = Booking.query.all()
-    return jsonify([{
+    
+    # Check if there are no tickets
+    if not tickets:
+        return {"message": "No tickets found."}, 404
+
+    # Prepare the response
+    ticket_list = [{
             'id': ticket.id,
-            'booking_date': ticket.booking_date,
+            'booking_date': ticket.booking_date.isoformat(),  # Convert to ISO format
             'number_of_seats': ticket.number_of_seats,
-            'selected_seats':ticket.selected_seats,
+            'selected_seats': ticket.selected_seats,
             'total_cost': ticket.total_cost,
             'destination': ticket.destination,
-            'departure_time': ticket.departure_time, 
-        } for ticket in tickets]), 200
+            'departure_time': ticket.departure_time.strftime("%H:%M:%S"),  # Format time
+        } for ticket in tickets]
+
+    return ticket_list, 200  # Return the list directly
+
 
 
 
@@ -168,9 +177,9 @@ def get_ticket_by_id(ticket_id):
     ticket = Booking.query.get(ticket_id)
     
     if not ticket:
-        return jsonify({"message": "No ticket found for this ID."}), 404
+        return ({"message": "No ticket found for this ID."}), 404
     
-    return jsonify({
+    return ({
 
             'id': ticket.id,
             'booking_date': ticket.booking_date,
