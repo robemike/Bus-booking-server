@@ -1,12 +1,12 @@
 from flask import Blueprint, request,jsonify
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Driver, db,Bus,Schedule
+from .models import Driver, db,Bus,Schedule,Customer
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,jwt_required,get_jwt_identity
 from datetime import datetime
 
 
-driver_bp = Blueprint("driver_bp", __name__, url_prefix="/")
+driver_bp = Blueprint("driver_bp", __name__, url_prefix="/driver")
 bcrypt = Bcrypt()
 jwt = JWTManager()
 driver_api = Api(driver_bp)
@@ -188,7 +188,7 @@ class RegisterBuses(Resource):
                 number_of_seats=data.get('number_of_seats'),
                 route=data.get('route'),
                 travel_time=travel_time, 
-                number_plate='KAW 451C',
+                number_plate=data.get('number_plate'),
                 image=data.get('image')
 
             )
@@ -382,19 +382,34 @@ class ScheduledBuses(Resource):
             return {"error": "Failed to create scheduled bus.", "details": str(e)}, 500
         
 class DeleteSchedule(Resource):
-    @jwt_required()  # Protect this route if you want authentication
+    # @jwt_required()  # Protect this route if you want authentication
     def delete(self, schedule_id):
         # Fetch the schedule by ID
         schedule = Schedule.query.get(schedule_id)
 
         if not schedule:
-            return jsonify({"msg": "Schedule not found"}), 404
+            return ({"msg": "Schedule not found"}), 404
 
         # Delete the schedule
         db.session.delete(schedule)
         db.session.commit()
 
-        return jsonify({"msg": "Schedule deleted successfully"}), 200
+        return ({"msg": "Schedule deleted successfully"}), 200
+    
+class ViewCustomers(Resource):
+    # @jwt_required()
+    def get(self):
+        """View all registered customers"""
+        customers = Customer.query.all()
+        
+        customer_list = [{
+            'id': customer.id,
+            'firstname': customer.firstname,
+            'lastname': customer.lastname,
+            'email': customer.email,
+        } for customer in customers]
+        
+        return {"customers": customer_list}, 200
 
 #Bus Cost per Seat
 
@@ -525,11 +540,12 @@ driver_api.add_resource(Login, "/login")
 driver_api.add_resource(ProtectedResource, "/protected")
 driver_api.add_resource(RegisterBuses, "/register/buses")
 driver_api.add_resource(ViewBusesByDriver, '/buses/driver/<int:driver_id>')
+driver_api.add_resource(ViewCustomers, '/customers')
 driver_api.add_resource(ViewBusById, '/buses/<int:bus_id>')
 driver_api.add_resource(DeleteBus, '/bus/<int:bus_id>', endpoint='delete_bus')
 driver_api.add_resource(GetScheduledBuses, "/view_scheduled_buses")
 driver_api.add_resource(ScheduledBuses, "/schedule_buses")
-driver_api.add_resource(DeleteSchedule, "/delete_schedule_buses")
+driver_api.add_resource(DeleteSchedule, "/delete_scheduled_buses/<int:schedule_id>")
 driver_api.add_resource(ViewBusCost, '/buses/<int:bus_id>/cost', endpoint='get_bus_cost')
 driver_api.add_resource(AddBusCostByID, '/buses/<int:bus_id>/cost', endpoint='add_bus_cost_by_id')
 driver_api.add_resource(UpdateBusCostByID, '/buses/<int:bus_id>/cost', endpoint='update_bus_cost_by_id')

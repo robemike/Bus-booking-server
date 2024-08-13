@@ -56,10 +56,10 @@ class Bus(db.Model, SerializerMixin):
     travel_time = db.Column(db.Time, nullable=False)
     number_plate = db.Column(db.String,unique=True)
     image = db.Column(db.String) 
-    driver = db.relationship('Driver', backref='buses')
-    
-    
+    driver = db.relationship('Driver', back_populates='buses')
 
+    serialize_only = ('id', 'username', 'cost_per_seat', 'number_of_seats', 'route', 'travel_time', 'number_plate', 'image')
+    
     driver = relationship("Driver", back_populates="buses",lazy='select')
     schedules = relationship("Schedule", back_populates="bus")
     bookings = relationship("Booking", back_populates="bus")
@@ -67,7 +67,7 @@ class Bus(db.Model, SerializerMixin):
 
     @validates("number_plate")
     def validate_number_plate(self, key, number_plate):
-        if len(number_plate) != 7 :
+        if len(number_plate) != 8 :
             ValueError("Invalid number plate format")
 
 

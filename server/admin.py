@@ -4,7 +4,7 @@ from .models import Admin, Driver, Customer, Bus, Schedule, db
 from flask_jwt_extended import create_access_token, jwt_required,create_refresh_token, get_jwt_identity
 from flask_bcrypt import Bcrypt
 
-admin_bp = Blueprint('admin_bp', __name__, url_prefix='/')
+admin_bp = Blueprint('admin_bp', __name__, url_prefix='/admin')
 api = Api(admin_bp)
 bcrypt = Bcrypt()
 
