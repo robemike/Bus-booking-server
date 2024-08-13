@@ -58,12 +58,14 @@ class Bus(db.Model, SerializerMixin):
     image = db.Column(db.String) 
     driver = db.relationship('Driver', back_populates='buses')
 
-    serialize_only = ('id', 'username', 'cost_per_seat', 'number_of_seats', 'route', 'travel_time', 'number_plate', 'image')
+    
     
     driver = relationship("Driver", back_populates="buses",lazy='select')
     schedules = relationship("Schedule", back_populates="bus")
     bookings = relationship("Booking", back_populates="bus")
+    seats =relationship("Seat", back_populates="bus")
    
+    serialize_only = ('id', 'username', 'cost_per_seat', 'number_of_seats', 'route', 'travel_time', 'number_plate', 'image','seats')
 
     @validates("number_plate")
     def validate_number_plate(self, key, number_plate):
@@ -117,9 +119,10 @@ class Booking(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
-    booking_date = db.Column(db.Date, default=datetime.utcnow)
+    booking_date = db.Column(db.Date, default=date.today)
     number_of_seats = db.Column(db.Integer, nullable=False)
     total_cost = db.Column(db.Float)
+    selected_seats = db.Column(db.String) 
     destination = db.Column(db.String, nullable=False) 
     departure_time = db.Column(db.Time, nullable=False)
     current_address=db.Column(db.String, nullable=False)
@@ -127,6 +130,10 @@ class Booking(db.Model, SerializerMixin):
 
     customer = db.relationship("Customer", back_populates="bookings")
     bus = db.relationship("Bus", back_populates="bookings")
+    seats=db.relationship("Seat", back_populates="bookings")
+
+
+    serialize_only = ('id', 'customer_id', 'bus_id', 'booking_date', 'number_of_seats','total_cost', 'selected_seats', 'destination', 'departure_time','current_address')
 
 
     @property
@@ -139,6 +146,20 @@ class Booking(db.Model, SerializerMixin):
         self.total_cost = self.calculate_total_cost  
         db.session.add(self)
         db.session.commit()
+
+    
+class Seat(db.Model,SerializerMixin):
+    __tablename__="seats"
+
+    id = db.Column(db.Integer, primary_key=True)
+    status=db.Column(db.String)
+    seat_number=db.Column(db.String)
+    bus_id=db.Column(db.Integer,db.ForeignKey('buses.id'), nullable=False)
+    booking_id=db.Column(db.Integer,db.ForeignKey('bookings.id'))
+
+    bus=db.relationship("Bus",back_populates="seats")
+    bookings=db.relationship("Booking",back_populates="seats")
+
 
 class Driver(db.Model, SerializerMixin):
     __tablename__ = "drivers"
@@ -182,6 +203,10 @@ class Driver(db.Model, SerializerMixin):
         elif Driver.query.filter_by(email=email).first():
             raise ValueError("Email already exists")
         return email
+
+
+
+    
 
 class Admin(db.Model, SerializerMixin):
     __tablename__ = "admins"

@@ -9,7 +9,7 @@ from datetime import timedelta,date
 from flask import Flask,jsonify,request
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
-from datetime import date
+from datetime import date,time
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -153,6 +153,7 @@ def get_tickets():
             'id': ticket.id,
             'booking_date': ticket.booking_date,
             'number_of_seats': ticket.number_of_seats,
+            'selected_seats':ticket.selected_seats,
             'total_cost': ticket.total_cost,
             'destination': ticket.destination,
             'departure_time': ticket.departure_time, 
@@ -175,12 +176,59 @@ def get_ticket_by_id(ticket_id):
             'booking_date': ticket.booking_date,
             'number_of_seats': ticket.number_of_seats,
             'total_cost':ticket.total_cost,
+            'selected_seats':ticket.selected_seats,
             'destination':ticket.destination,
             'departure_time': ticket.departure_time, 
     }), 200
 
+ 
+@app.route('/tickets', methods=['POST'], endpoint='create_ticket')
+# @jwt_required()  
+def create_ticket():
+    data = request.get_json() 
 
+    # Validate input data
+    if not data:
+        return {"msg": "Missing input data"}, 400
 
+    required_fields = ['customer_id', 'bus_id', 'booking_date', 'number_of_seats', 'selected_seats', 'total_cost', 'destination', 'departure_time', 'current_address']
+    for field in required_fields:
+        if field not in data:
+            return {"msg": f"'{field}' is required"}, 400
+
+    # Create a new Booking instance
+    new_ticket = Booking(
+        customer_id=data['customer_id'],
+        bus_id=data['bus_id'],
+        booking_date=data['booking_date'],  # Ensure this is a valid date string
+        number_of_seats=data['number_of_seats'],
+        selected_seats=data['selected_seats'],
+        total_cost=data['total_cost'],
+        destination=data['destination'],
+        departure_time=data['departure_time'],  # Ensure this is a valid time string
+        current_address=data['current_address']  
+    )
+
+    # Add to the session and commit to the database
+    db.session.add(new_ticket)
+    db.session.commit()
+
+    # Convert times to strings for JSON serialization
+    return {
+        'msg': 'Ticket created successfully',
+        'ticket': {
+            'id': new_ticket.id,
+            'customer_id': new_ticket.customer_id,
+            'bus_id': new_ticket.bus_id,
+            'booking_date': new_ticket.booking_date.isoformat(),  # Convert to ISO format string
+            'number_of_seats': new_ticket.number_of_seats,
+            'selected_seats': new_ticket.selected_seats,
+            'total_cost': new_ticket.total_cost,
+            'destination': new_ticket.destination,
+            'departure_time': new_ticket.departure_time.strftime("%H:%M:%S"),  # Convert time to string
+            'current_address': new_ticket.current_address  
+        }
+    }, 201  # Return the response with status code 201
 
 
 

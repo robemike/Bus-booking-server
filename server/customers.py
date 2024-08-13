@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request,make_response
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
 from .models import Customer, Booking, db,Bus
@@ -113,9 +113,8 @@ class Login(Resource):
 #         return refresh()
     
 class ViewBookings(Resource):
-    # @jwt_required()
     def get(self):
-        """Retrieve all bookings for the authenticated customer.
+        """Retrieve all bookings for the customer.
         ---
         responses:
           200:
@@ -123,27 +122,30 @@ class ViewBookings(Resource):
           404:
             description: No bookings found
         """
-        customer_id = get_jwt_identity()  # Get the current customer's ID
+        # You might want to replace this with an actual customer ID
+        customer_id = 1  # Hardcoding for demonstration; replace with actual logic
 
         # Query the database for bookings associated with this customer
         bookings = Booking.query.filter_by(customer_id=customer_id).all()
-
+        print(bookings)
         if not bookings:
             return {"message": "No bookings found."}, 404
 
         # Return the list of bookings
-        return [{
-            'id': booking.id,
-            'customer_id': booking.customer_id,
-            'bus_id': booking.bus_id,
-            'booking_date': booking.booking_date.isoformat(),
-            'number_of_seats': booking.number_of_seats,
-            'total_cost': booking.total_cost,
-            'destination': booking.destination,
-            'departure_time': str(booking.departure_time),
-            'current_address': booking.current_address
-
-        } for booking in bookings], 200
+        # return [{
+        #     # 'id': booking.id,
+        #     # 'customer_id': booking.customer_id,
+        #     # 'bus_id': booking.bus_id,
+        #     # 'booking_date': booking.booking_date.isoformat(),
+        #     # 'number_of_seats': booking.number_of_seats,
+        #     # 'total_cost': booking.total_cost,
+        #     # 'destination': booking.destination,
+        #     # 'departure_time': booking.departure_time.strftime("%H:%M:%S"), 
+        #     # 'current_address': booking.current_address,
+        
+        # } for booking in bookings], 200
+        return make_response([booking.to_dict() for booking in bookings],200)
+    
     
 class AddBookings(Resource):
     # @jwt_required()
@@ -158,7 +160,7 @@ class AddBookings(Resource):
             "current_address",
             "number_of_seats",
             "destination", 
-            "bus_id"  
+            "bus_id" 
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
