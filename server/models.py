@@ -152,8 +152,8 @@ class Seat(db.Model,SerializerMixin):
     __tablename__="seats"
 
     id = db.Column(db.Integer, primary_key=True)
-    status=db.Column(db.String)
-    seat_number=db.Column(db.String, default='available')
+    status=db.Column(db.String, default='available')
+    seat_number=db.Column(db.String)
     bus_id=db.Column(db.Integer,db.ForeignKey('buses.id'), nullable=False)
     booking_id=db.Column(db.Integer,db.ForeignKey('bookings.id'))
 

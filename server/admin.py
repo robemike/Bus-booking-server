@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request,make_response
 from flask_restful import Api, Resource
 from .models import Admin, Driver, Customer, Bus, Schedule, db
 from flask_jwt_extended import create_access_token, jwt_required,create_refresh_token, get_jwt_identity
@@ -251,17 +251,18 @@ class ViewBuses(Resource):
         if not buses:
             return {"message": "No buses found."}, 404
 
-        return [{
-            'id': bus.id,
-            'username': bus.username,
-            'cost_per_seat': bus.cost_per_seat,
-            'number_of_seats': bus.number_of_seats,
-            'route': bus.route,
-            'travel_time': bus.travel_time.isoformat(), 
-            'number_plate': bus.number_plate,
-            'image':bus.image,
-            'seats':bus.seats
-        } for bus in buses], 200
+        # return [{
+        #     'id': bus.id,
+        #     'username': bus.username,
+        #     'cost_per_seat': bus.cost_per_seat,
+        #     'number_of_seats': bus.number_of_seats,
+        #     'route': bus.route,
+        #     'travel_time': bus.travel_time.isoformat(), 
+        #     'number_plate': bus.number_plate,
+        #     'image':bus.image,
+        #     'seats':bus.seats
+        # } for bus in buses], 200
+        return make_response([bus.to_dict() for bus in buses],200)
     
 
 class ViewBusesByID(Resource):
