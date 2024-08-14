@@ -547,21 +547,22 @@ class UpdateSeat(Resource):
     def put(self, seat_id):
         """Update a seat by ID."""
         data = request.get_json()
-        bus_id = data.get('bus_id')  # Make sure this is provided
+        bus_id = data.get('bus_id')  # Get bus_id from the request body
 
         # Validate bus_id
         if bus_id is None:
             return {"message": "bus_id is required."}, 400
 
-        seat = Seat.query.get(seat_id)
+        seat = Seat.query.get(seat_id)  # Retrieve the seat using seat_id from the route
         if not seat:
             return {"message": "Seat not found."}, 404
 
-        seat.bus_id = bus_id  # Ensure bus_id is valid
+        seat.bus_id = bus_id  # Update the bus_id
         # Update other fields if necessary
         db.session.commit()
 
         return {"message": "Seat updated successfully."}, 200
+
     
 class DeleteSeat(Resource):
     def delete(self, seat_id):

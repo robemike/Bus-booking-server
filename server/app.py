@@ -92,24 +92,6 @@ app.register_blueprint(admin_bp)
 
 
 #Routes
-# @app.route('/stk_push', methods=['GET'])
-# def stk_push():
-#     # Retrieve parameters from the request
-#     phone_number = request.args.get('phone_number')
-    
-#     if not phone_number:
-#         return jsonify({"error": "Phone number is required"}), 400
-
-#     amount = request.args.get('amount', 1, type=int)
-#     account_reference = 'Laurine'
-#     transaction_desc = 'Description'
-#     callback_url = 'https://api.darajambili.com/express-payment'
-    
-#     try:
-#         response = mpesa_client.stk_push(phone_number, amount, account_reference, transaction_desc, callback_url)
-#         return jsonify(response), 200
-#     except Exception as e:
-        # return jsonify({"error": str(e)}), 500
     
 #home
 @app.route("/")
@@ -154,22 +136,21 @@ def get_buses():
 def get_tickets():
     tickets = Booking.query.all()
     
-    # Check if there are no tickets
     if not tickets:
         return {"message": "No tickets found."}, 404
 
-    # Prepare the response
+    
     ticket_list = [{
             'id': ticket.id,
-            'booking_date': ticket.booking_date.isoformat(),  # Convert to ISO format
+            'booking_date': ticket.booking_date.isoformat(), 
             'number_of_seats': ticket.number_of_seats,
             'selected_seats': ticket.selected_seats,
             'total_cost': ticket.total_cost,
             'destination': ticket.destination,
-            'departure_time': ticket.departure_time.strftime("%H:%M:%S"),  # Format time
+            'departure_time': ticket.departure_time.strftime("%H:%M:%S"),  
         } for ticket in tickets]
 
-    return ticket_list, 200  # Return the list directly
+    return ticket_list, 200  #
 
 
 
@@ -209,39 +190,38 @@ def create_ticket():
         if field not in data:
             return {"msg": f"'{field}' is required"}, 400
 
-    # Create a new Booking instance
+  
     new_ticket = Booking(
         customer_id=data['customer_id'],
         bus_id=data['bus_id'],
-        booking_date=data['booking_date'],  # Ensure this is a valid date string
+        booking_date=data['booking_date'], 
         number_of_seats=data['number_of_seats'],
         selected_seats=data['selected_seats'],
         total_cost=data['total_cost'],
         destination=data['destination'],
-        departure_time=data['departure_time'],  # Ensure this is a valid time string
+        departure_time=data['departure_time'],  
         current_address=data['current_address']  
     )
-
-    # Add to the session and commit to the database
+   
     db.session.add(new_ticket)
     db.session.commit()
 
-    # Convert times to strings for JSON serialization
+   
     return {
         'msg': 'Ticket created successfully',
         'ticket': {
             'id': new_ticket.id,
             'customer_id': new_ticket.customer_id,
             'bus_id': new_ticket.bus_id,
-            'booking_date': new_ticket.booking_date.isoformat(),  # Convert to ISO format string
+            'booking_date': new_ticket.booking_date.isoformat(), 
             'number_of_seats': new_ticket.number_of_seats,
             'selected_seats': new_ticket.selected_seats,
             'total_cost': new_ticket.total_cost,
             'destination': new_ticket.destination,
-            'departure_time': new_ticket.departure_time.strftime("%H:%M:%S"),  # Convert time to string
+            'departure_time': new_ticket.departure_time.strftime("%H:%M:%S"), 
             'current_address': new_ticket.current_address  
         }
-    }, 201  # Return the response with status code 201
+    }, 201  
 
 
 

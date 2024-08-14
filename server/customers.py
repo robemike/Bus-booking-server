@@ -200,7 +200,7 @@ class UpdateBooking(Resource):
     def put(self, booking_id):
         """Update a booking by ID."""
         data = request.get_json()
-        bus_id = data.get('bus_id')  # Ensure this is provided and valid
+        bus_id = data.get('bus_id') 
         # Validate bus_id
         if bus_id is None:
             return {"message": "bus_id is required."}, 400
