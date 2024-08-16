@@ -183,7 +183,6 @@ class RegisterBuses(Resource):
             
             new_bus = Bus(
                 username=data.get('username'),
-                driver_id=data.get('driver_id'),
                 cost_per_seat=data.get('cost_per_seat'),
                 number_of_seats=data.get('number_of_seats'),
                 route=data.get('route'),
