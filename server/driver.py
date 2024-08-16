@@ -1,7 +1,7 @@
 from flask import Blueprint, request,jsonify,make_response
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Driver, db,Bus,Schedule,Customer,Seat
+from models import Driver, db,Bus,Schedule,Customer,Seat
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,jwt_required,get_jwt_identity
 from datetime import datetime
 
@@ -209,6 +209,68 @@ class RegisterBuses(Resource):
             db.session.rollback()
             return {"error": str(e)}, 500
         
+class EditBuses(Resource):
+    def patch(self, bus_id):
+        data = request.get_json()
+
+        if not data:
+            return {"error": "No input data provided."}, 400
+
+        bus = Bus.query.get(bus_id)
+        if not bus:
+            return {"error": "Bus not found."}, 404
+
+        # Define required fields
+        required_fields = ["username", "driver_id", "cost_per_seat", "number_of_seats", "route", "travel_time", "number_plate", "image"]
+        missing_fields = [field for field in required_fields if field not in data]
+
+        if missing_fields:
+            return {
+                "warning": f"Missing fields: {', '.join(missing_fields)}. No changes made to these fields."
+            }, 400
+
+        try:
+            # Update the fields if they are provided in the request
+            if 'username' in data:
+                bus.username = data['username']
+            if 'driver_id' in data:
+                bus.driver_id = data['driver_id']
+            if 'cost_per_seat' in data:
+                bus.cost_per_seat = data['cost_per_seat']
+            if 'number_of_seats' in data:
+                old_seats = bus.number_of_seats
+                new_seats = data['number_of_seats']
+                bus.number_of_seats = new_seats
+
+                if new_seats > old_seats:
+                    new_seat_numbers = range(old_seats + 1, new_seats + 1)
+                    for seat_num in new_seat_numbers:
+                        new_seat = Seat(
+                            seat_number=f"S{seat_num:03}",
+                            bus_id=bus.id
+                        )
+                        db.session.add(new_seat)
+                elif new_seats < old_seats:
+                    excess_seats = Seat.query.filter(Seat.bus_id == bus.id).order_by(Seat.id.desc()).limit(old_seats - new_seats).all()
+                    for seat in excess_seats:
+                        db.session.delete(seat)
+            if 'route' in data:
+                bus.route = data['route']
+            if 'travel_time' in data:
+                travel_time_str = data['travel_time']
+                bus.travel_time = datetime.strptime(travel_time_str, "%H:%M:%S").time()
+            if 'number_plate' in data:
+                bus.number_plate = data['number_plate']
+            if 'image' in data:
+                bus.image = data['image']
+
+            db.session.commit()
+            return {"message": "Bus updated successfully."}, 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+        
 
 class ViewBusesByDriver(Resource):
     # @jwt_required()
@@ -389,6 +451,86 @@ class ScheduledBuses(Resource):
         except Exception as e:
             db.session.rollback()
             return {"error": "Failed to create scheduled bus.", "details": str(e)}, 500
+        
+class EditScheduledBuses(Resource):
+    def patch(self, schedule_id):
+        """Update an existing scheduled bus
+        ---
+        parameters:
+          - name: schedule_id
+            in: path
+            required: true
+            type: integer
+          - name: body
+            in: body
+            required: true
+            schema:
+              type: object
+              properties:
+                bus_id:
+                  type: integer
+                departure_time:
+                  type: string
+                  format: time
+                arrival_time:
+                  type: string
+                  format: time
+                travel_date:
+                  type: string
+                  format: date
+                available_seats:
+                  type: integer
+                occupied_seats:
+                  type: integer
+        responses:
+          200:
+            description: Scheduled bus updated successfully
+          400:
+            description: Error with missing fields or invalid data
+          404:
+            description: Scheduled bus not found
+        """
+        data = request.get_json()
+
+        if not data:
+            return {"error": "No input data provided."}, 400
+
+        schedule = Schedule.query.get(schedule_id)
+        if not schedule:
+            return {"error": "Scheduled bus not found."}, 404
+
+        # Define required fields
+        required_fields = ['bus_id', 'departure_time', 'arrival_time', 'travel_date', 'available_seats', 'occupied_seats']
+        missing_fields = [field for field in required_fields if field not in data]
+
+        if missing_fields:
+            return {
+                "warning": f"Missing fields: {', '.join(missing_fields)}. No changes made to these fields."
+            }, 400
+
+        try:
+            # Update the fields if they are provided in the request
+            if 'bus_id' in data:
+                schedule.bus_id = data['bus_id']
+            if 'departure_time' in data:
+                schedule.departure_time = datetime.strptime(data['departure_time'], "%H:%M:%S").time()
+            if 'arrival_time' in data:
+                schedule.arrival_time = datetime.strptime(data['arrival_time'], "%H:%M:%S").time()
+            if 'travel_date' in data:
+                schedule.travel_date = datetime.strptime(data['travel_date'], "%Y-%m-%d").date()
+            if 'available_seats' in data:
+                schedule.available_seats = data['available_seats']
+            if 'occupied_seats' in data:
+                schedule.occupied_seats = data['occupied_seats']
+
+            db.session.commit()
+            return {"message": "Scheduled bus updated successfully."}, 200
+        except ValueError:
+            return {"error": "Invalid date or time format."}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {"error": "Failed to update scheduled bus.", "details": str(e)}, 500
+
         
 class DeleteSchedule(Resource):
     # @jwt_required()  # Protect this route if you want authentication
@@ -598,15 +740,17 @@ driver_api.add_resource(Signup, "/signup")
 driver_api.add_resource(Login, "/login")
 driver_api.add_resource(ProtectedResource, "/protected")
 driver_api.add_resource(RegisterBuses, "/register/buses")
+driver_api.add_resource(EditBuses, "/edit-buses/<int:bus_id>")
 driver_api.add_resource(ViewBusesByDriver, '/buses/driver/<int:driver_id>')
 driver_api.add_resource(ViewCustomers, '/customers')
 driver_api.add_resource(ViewBusById, '/buses/<int:bus_id>')
 driver_api.add_resource(DeleteBus, '/bus/<int:bus_id>', endpoint='delete_bus')
 driver_api.add_resource(GetScheduledBuses, "/view_scheduled_buses")
+driver_api.add_resource(ScheduledBuses, "/schedule_buses")
+driver_api.add_resource(EditScheduledBuses, "/edit-scheduled_buses/<int:schedule_id>")
+driver_api.add_resource(DeleteSchedule, "/delete_scheduled_buses/<int:schedule_id>")
 driver_api.add_resource(UpdateSeat, "/update_seat")
 driver_api.add_resource(DeleteSeat, "/delete_seat/<int:seat_id>")
-driver_api.add_resource(ScheduledBuses, "/schedule_buses")
-driver_api.add_resource(DeleteSchedule, "/delete_scheduled_buses/<int:schedule_id>")
 driver_api.add_resource(ViewBusCost, '/buses/<int:bus_id>/cost', endpoint='get_bus_cost')
 driver_api.add_resource(AddBusCostByID, '/buses/<int:bus_id>/cost', endpoint='add_bus_cost_by_id')
 driver_api.add_resource(UpdateBusCostByID, '/buses/<int:bus_id>/cost', endpoint='update_bus_cost_by_id')

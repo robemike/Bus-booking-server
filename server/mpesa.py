@@ -1,5 +1,5 @@
  # #Mpesa stk
-from flask import Flask, request
+from flask import Flask, request,jsonify
 import requests
 from requests.auth import HTTPBasicAuth
 from datetime import datetime
@@ -15,6 +15,29 @@ my_endpoint="https://f0f2-41-80-112-198.ngrok-free.app"
 @app.route('/')
 def home():
     return 'Hello Mpesa!'
+
+@app.route('/api/mpesa-payment', methods=['POST'])
+def mpesa_payment():
+    try:
+        data = request.get_json()  # Safely parse JSON
+        if not data:
+            return jsonify({"error": "Invalid JSON"}), 400
+
+        amount = data.get('amount')
+        phone_number = data.get('phone_number')
+
+        # Proceed with further logic like initiating STK push
+        mpesa_response = {
+            "message": "STK Push initiated successfully",
+            "response_code": "0",
+            "transaction_id": "1234567890"
+        }
+
+        return jsonify(mpesa_response), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
 
 @app.route('/pay')  
 def MpesaExpress():  
