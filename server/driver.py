@@ -221,7 +221,7 @@ class EditBuses(Resource):
             return {"error": "Bus not found."}, 404
 
         # Define required fields
-        required_fields = ["username", "driver_id", "cost_per_seat", "number_of_seats", "route", "travel_time", "number_plate", "image"]
+        required_fields = ["username","cost_per_seat", "number_of_seats", "route", "travel_time", "number_plate", "image"]
         missing_fields = [field for field in required_fields if field not in data]
 
         if missing_fields:
@@ -233,8 +233,6 @@ class EditBuses(Resource):
             # Update the fields if they are provided in the request
             if 'username' in data:
                 bus.username = data['username']
-            if 'driver_id' in data:
-                bus.driver_id = data['driver_id']
             if 'cost_per_seat' in data:
                 bus.cost_per_seat = data['cost_per_seat']
             if 'number_of_seats' in data:
