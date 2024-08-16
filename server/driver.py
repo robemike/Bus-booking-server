@@ -183,8 +183,8 @@ class RegisterBuses(Resource):
             
             new_bus = Bus(
                 username=data.get('username'),
-                cost_per_seat=data.get('cost_per_seat'),
-                number_of_seats=data.get('number_of_seats'),
+                cost_per_seat=int(data.get('cost_per_seat')),
+                number_of_seats=int(data.get('number_of_seats')),
                 route=data.get('route'),
                 travel_time=travel_time, 
                 number_plate=data.get('number_plate'),
@@ -235,10 +235,10 @@ class EditBuses(Resource):
             if 'username' in data:
                 bus.username = data['username']
             if 'cost_per_seat' in data:
-                bus.cost_per_seat = data['cost_per_seat']
+                bus.cost_per_seat = int(data['cost_per_seat'])
             if 'number_of_seats' in data:
-                old_seats = bus.number_of_seats
-                new_seats = data['number_of_seats']
+                old_seats = int(bus.number_of_seats)
+                new_seats = int(data['number_of_seats'])
                 bus.number_of_seats = new_seats
 
                 if new_seats > old_seats:
