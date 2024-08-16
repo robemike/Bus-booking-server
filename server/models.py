@@ -49,7 +49,7 @@ class Bus(db.Model, SerializerMixin):
     __tablename__ = "buses"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
-    driver_id = db.Column(db.Integer, db.ForeignKey("drivers.id"), nullable=False)
+    driver_id = db.Column(db.Integer, db.ForeignKey("drivers.id"))
     cost_per_seat = db.Column(db.Integer, nullable=False)
     number_of_seats = db.Column(db.Integer, nullable=False)
     route = db.Column(db.String, nullable=False)

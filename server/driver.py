@@ -169,7 +169,7 @@ class RegisterBuses(Resource):
         if not data:
             return {"error": "No input data provided."}, 400
         
-        required_fields = ["username", "cost_per_seat", "number_of_seats", "route", "travel_time", "number_plate", "image"]
+        required_fields = ["username", "driver_id", "cost_per_seat", "number_of_seats", "route", "travel_time", "number_plate","image"]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
         if missing_fields:
@@ -183,17 +183,18 @@ class RegisterBuses(Resource):
             
             new_bus = Bus(
                 username=data.get('username'),
+                driver_id=data.get('driver_id'),
                 cost_per_seat=data.get('cost_per_seat'),
                 number_of_seats=data.get('number_of_seats'),
                 route=data.get('route'),
                 travel_time=travel_time, 
                 number_plate=data.get('number_plate'),
                 image=data.get('image'),                
+
             )
             
             db.session.add(new_bus)
             db.session.commit()
-
             seats = []
             for seat_num in range(1, new_bus.number_of_seats + 1):
                 seat = Seat(
@@ -203,12 +204,10 @@ class RegisterBuses(Resource):
                 seats.append(seat)
             db.session.add_all(seats)
             db.session.commit()
-            
             return {"message": "Bus added successfully.", "bus_id": new_bus.id}, 201
         except Exception as e:
             db.session.rollback()
             return {"error": str(e)}, 500
-
         
 class EditBuses(Resource):
     def patch(self, bus_id):
