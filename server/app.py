@@ -1,16 +1,15 @@
 import random
-from flask_jwt_extended import JWTManager,get_jwt,jwt_required,get_jwt_identity
+from flask_jwt_extended import JWTManager,get_jwt,jwt_required
 from flask_cors import CORS
 from .customers import customer_bp,bcrypt as customer_bcrypt
 from .driver import driver_bp,bcrypt as driver_bcrypt
 from .admin import admin_bp,bcrypt as admin_bcrypt
-from .models import db,Bus,Schedule,Customer,Booking
+from .models import db,Bus,Customer,Booking,Seat
 from datetime import timedelta,date
 from flask import Flask,jsonify,request
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
-# from mpesa import mpesa_client
-from datetime import date
+from datetime import date,time
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -93,23 +92,6 @@ app.register_blueprint(admin_bp)
 
 
 #Routes
-# @app.route('/stk_push', methods=['GET'])
-# def stk_push():
-#     # Retrieve parameters from the request
-#     phone_number = request.args.get('phone_number') 
-#     if not phone_number:
-#         return jsonify({"error": "Phone number is required"}), 400
-
-#     amount = request.args.get('amount', 1, type=int)
-#     account_reference = 'Laurine'
-#     transaction_desc = 'Description'
-#     callback_url = 'https://api.darajambili.com/express-payment'
-    
-#     try:
-#         response = mpesa_client.stk_push(phone_number, amount, account_reference, transaction_desc, callback_url)
-#         return jsonify(response), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
     
 #home
 @app.route("/")
@@ -122,11 +104,15 @@ def get_buses():
     customers=Customer.query.all()
     return jsonify([customer.to_dict() for customer in customers]),200
 
-
+#seat
+@app.route('/seats', methods=['GET'],endpoint='view_seats')
+def get_seats():
+    seats=Seat.query.all()
+    return ([seat.to_dict() for seat in seats]),200
 
 
 #Buses
-@app.route('/view_buses', methods=['GET'], endpoint='view_buses')
+@app.route('/buses', methods=['GET'], endpoint='view_buses')
 def get_buses():
     buses = Bus.query.all()
     if not buses:
@@ -140,24 +126,33 @@ def get_buses():
         'route': bus.route,
         'travel_time': bus.travel_time.isoformat(), 
         'number_plate': bus.number_plate,
+        'image':bus.image
     } for bus in buses]), 200
 
 
     
 #Tickets
-@app.route('/tickets', methods=['GET'],endpoint='view_tickets')
+@app.route('/tickets', methods=['GET'], endpoint='view_tickets')
 def get_tickets():
-    tickets=Booking.query.all()
-    return jsonify([{
+    tickets = Booking.query.all()
+    
+    if not tickets:
+        return {"message": "No tickets found."}, 404
+
+    
+    ticket_list = [{
             'id': ticket.id,
-            'booking_date': ticket.booking_date,
+            'booking_date': ticket.booking_date.isoformat(), 
             'number_of_seats': ticket.number_of_seats,
-            'total_cost':ticket.total_cost,
-            'destination':ticket.destination
-            # 'departure_time':ticket.departure_time
-            
-            
-        } for ticket in tickets]),200
+            'selected_seats': ticket.selected_seats,
+            'total_cost': ticket.total_cost,
+            'destination': ticket.destination,
+            'departure_time': ticket.departure_time.strftime("%H:%M:%S"),  
+        } for ticket in tickets]
+
+    return ticket_list, 200  #
+
+
 
 
 @app.route('/tickets/<int:ticket_id>', methods=['GET'], endpoint='view_tickets_by_id')
@@ -167,21 +162,66 @@ def get_ticket_by_id(ticket_id):
     ticket = Booking.query.get(ticket_id)
     
     if not ticket:
-        return jsonify({"message": "No ticket found for this ID."}), 404
+        return ({"message": "No ticket found for this ID."}), 404
     
-    return jsonify({
+    return ({
 
             'id': ticket.id,
             'booking_date': ticket.booking_date,
             'number_of_seats': ticket.number_of_seats,
             'total_cost':ticket.total_cost,
-            'destination':ticket.destination
+            'selected_seats':ticket.selected_seats,
+            'destination':ticket.destination,
+            'departure_time': ticket.departure_time, 
     }), 200
 
+ 
+@app.route('/tickets', methods=['POST'], endpoint='create_ticket')
+# @jwt_required()  
+def create_ticket():
+    data = request.get_json() 
 
+    # Validate input data
+    if not data:
+        return {"msg": "Missing input data"}, 400
 
+    required_fields = ['customer_id', 'bus_id', 'booking_date', 'number_of_seats', 'selected_seats', 'total_cost', 'destination', 'departure_time', 'current_address']
+    for field in required_fields:
+        if field not in data:
+            return {"msg": f"'{field}' is required"}, 400
 
+  
+    new_ticket = Booking(
+        customer_id=data['customer_id'],
+        bus_id=data['bus_id'],
+        booking_date=data['booking_date'], 
+        number_of_seats=data['number_of_seats'],
+        selected_seats=data['selected_seats'],
+        total_cost=data['total_cost'],
+        destination=data['destination'],
+        departure_time=data['departure_time'],  
+        current_address=data['current_address']  
+    )
+   
+    db.session.add(new_ticket)
+    db.session.commit()
 
+   
+    return {
+        'msg': 'Ticket created successfully',
+        'ticket': {
+            'id': new_ticket.id,
+            'customer_id': new_ticket.customer_id,
+            'bus_id': new_ticket.bus_id,
+            'booking_date': new_ticket.booking_date.isoformat(), 
+            'number_of_seats': new_ticket.number_of_seats,
+            'selected_seats': new_ticket.selected_seats,
+            'total_cost': new_ticket.total_cost,
+            'destination': new_ticket.destination,
+            'departure_time': new_ticket.departure_time.strftime("%H:%M:%S"), 
+            'current_address': new_ticket.current_address  
+        }
+    }, 201  
 
 
 if __name__ == "__main__":

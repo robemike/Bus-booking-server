@@ -1,5 +1,5 @@
-from datetime import date,timedelta,time
-from app import db,app  
+from datetime import date, timedelta, time
+from app import db, app  
 from models import Customer, Bus, Schedule, Booking, Driver, Admin
 from faker import Faker
 import re
@@ -12,20 +12,6 @@ def clear_db():
         db.drop_all()
         db.create_all()
 
-def generate_number_plate():
-    """Generates a random number plate in the format ABC123."""
-    letters = ''.join(fake.random_choices(elements='ABCDEFGHIJKLMNOPQRSTUVWXYZ', length=3))
-    numbers = ''.join(fake.random_choices(elements='0123456789', length=3))
-    number_plate = f"{letters}{numbers}"
-    print(f"Generated number plate: {number_plate}")
-    return number_plate
-
-def validate_number_plate(value):
-    """Validates the number plate format."""
-    if not re.match(r'^[A-Z]{3}[0-9]{3}$', value):
-        print(f"Invalid number plate: {value}")
-        raise ValueError("Invalid number plate format")
-    return value
 
 def seed_data():
     clear_db()
@@ -40,7 +26,7 @@ def seed_data():
             password=fake.password(),
             address=fake.address(),
             phone_number=phone_number,
-            id_or_passport=str(fake.unique.random_int(min=100000000, max=999999999))
+            id_or_passport=str(fake.unique.random_int(min=10000000, max=99999999))  # Adjusted to 8 digits
         )
         customers.append(customer)
 
@@ -52,13 +38,12 @@ def seed_data():
         db.session.rollback()
         print(f"Error seeding customers: {str(e)}")
 
-        
     drivers = []
     for _ in range(2):
         driver = Driver(
             firstname=fake.first_name(),
             lastname=fake.last_name(),
-            license_number=str(fake.unique.random_int(min=100000000, max=999999999)),
+            license_number=str(fake.unique.random_int(min=10000000, max=99999999)),  # Adjusted to 8 digits
             experience_years=fake.random_int(min=1, max=10),
             phone_number=str(fake.random_int(min=6000000000, max=9999999999)),
             email=fake.unique.email(),
@@ -72,22 +57,16 @@ def seed_data():
 
     buses = []
     for i in range(2):
-        number_plate = generate_number_plate()
-        validated_number_plate = validate_number_plate(number_plate)
-        print(f"Validated number plate: {validated_number_plate}")
-
-        # Generate a random travel date (e.g., 1 to 30 days from today)
-        travel_date = date.today() + timedelta(days=fake.random_int(min=1, max=30))
 
         bus = Bus(
-        username=fake.company(),
-        driver_id=drivers[i].id,
-        cost_per_seat=fake.random_int(min=100, max=200),
-        number_of_seats=fake.random_int(min=30, max=50),
-        route=fake.street_name(),
-        travel_time=time(hour=14, minute=30),  # Adjust this as necessary
-        number_plate=validated_number_plate  
-)
+            username=fake.company(),
+            driver_id=drivers[i].id,
+            cost_per_seat=fake.random_int(min=100, max=200),
+            number_of_seats=fake.random_int(min=30, max=50),
+            route=fake.street_name(),
+            travel_time=time(hour=fake.random_int(min=6, max=22), minute=fake.random_int(min=0, max=59)),  # Random time for travel
+            number_plate=number_plate 
+        )
         print(f"Creating bus with number_plate: {bus.number_plate}")
         buses.append(bus)
 
@@ -99,9 +78,9 @@ def seed_data():
     for bus in buses:
         schedule = Schedule(
             bus_id=bus.id,
-            departure_time=date(2024, 8, 10, 14, 30),
-            arrival_time=date(2024, 8, 10, 16, 30),
-            travel_date=date(2024, 8, 10),
+            departure_time=time(hour=14, minute=30),  # Time object
+            arrival_time=time(hour=16, minute=30),    # Time object
+            travel_date=date.today() + timedelta(days=fake.random_int(min=1, max=30)),  # Future travel date
             available_seats=bus.number_of_seats,
             occupied_seats=0
         )
@@ -112,14 +91,23 @@ def seed_data():
     print(f"Seeded {len(schedules)} schedules.")
 
     bookings = []
-    for i, customer in enumerate(customers):
+    for customer in customers:
         booking = Booking(
             customer_id=customer.id,
-            bus_id=buses[i % len(buses)].id,
+            bus_id=buses[fake.random_int(min=0, max=len(buses) - 1)].id,  # Random bus selection
             number_of_seats=fake.random_int(min=1, max=5),
-            booking_date=date.utcnow()
+            booking_date=date.today(),  # Set to today's date
+            total_cost=0,  # Initialize to 0; will be calculated in the save method
+            selected_seats=fake.random_element(elements=('1A', '1B', '1C', '2A', '2B')),  # Random seat selection
+            destination=fake.city(),
+            departure_time=time(hour=fake.random_int(min=6, max=22), minute=fake.random_int(min=0, max=59)),  # Random time for departure
+            current_address=fake.address()
         )
         bookings.append(booking)
+
+    # Calculate total cost for bookings
+    for booking in bookings:
+        booking.total_cost = booking.number_of_seats * booking.bus.cost_per_seat  # Calculate total cost
 
     db.session.add_all(bookings)
     db.session.commit()
@@ -135,6 +123,6 @@ def seed_data():
     db.session.commit()
     print("Seeded admin.")
 
-if __name__== "_main_":
+if __name__ == "__main__":  
     with app.app_context():
         seed_data()

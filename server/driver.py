@@ -1,19 +1,19 @@
-from flask import Blueprint, request,jsonify
+from flask import Blueprint, request,jsonify,make_response
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Driver, db,Bus,Schedule
+from .models import Driver, db,Bus,Schedule,Customer,Seat
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,jwt_required,get_jwt_identity
 from datetime import datetime
 
 
-driver_bp = Blueprint("driver_bp", __name__, url_prefix="/drivers/auth")
+driver_bp = Blueprint("driver_bp", __name__, url_prefix="/")
 bcrypt = Bcrypt()
 jwt = JWTManager()
 driver_api = Api(driver_bp)
 
 
 class ProtectedResource(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         """Get protected resource
         ---
@@ -162,14 +162,14 @@ class Login(Resource):
 
 #Register Bus
 class RegisterBuses(Resource):
-    @jwt_required()
+    # @jwt_required()
     def post(self):
         data = request.get_json()
 
         if not data:
             return {"error": "No input data provided."}, 400
         
-        required_fields = ["username", "driver_id", "cost_per_seat", "number_of_seats", "route", "travel_time", "number_plate"]
+        required_fields = ["username", "cost_per_seat", "number_of_seats", "route", "travel_time", "number_plate", "image"]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
         if missing_fields:
@@ -183,23 +183,96 @@ class RegisterBuses(Resource):
             
             new_bus = Bus(
                 username=data.get('username'),
-                driver_id=data.get('driver_id'),
-                cost_per_seat=data.get('cost_per_seat'),
-                number_of_seats=data.get('number_of_seats'),
+                cost_per_seat=int(data.get('cost_per_seat')),
+                number_of_seats=int(data.get('number_of_seats')),
                 route=data.get('route'),
                 travel_time=travel_time, 
-                number_plate=data.get('number_plate')
+                number_plate=data.get('number_plate'),
+                image=data.get('image'),                
             )
             
             db.session.add(new_bus)
             db.session.commit()
+
+            seats = []
+            for seat_num in range(1, new_bus.number_of_seats + 1):
+                seat = Seat(
+                    seat_number=f"S{seat_num:03}",  
+                    bus_id=new_bus.id
+                )
+                seats.append(seat)
+            db.session.add_all(seats)
+            db.session.commit()
+            
             return {"message": "Bus added successfully.", "bus_id": new_bus.id}, 201
         except Exception as e:
             db.session.rollback()
             return {"error": str(e)}, 500
 
+        
+class EditBuses(Resource):
+    def patch(self, bus_id):
+        data = request.get_json()
+
+        if not data:
+            return {"error": "No input data provided."}, 400
+
+        bus = Bus.query.get(bus_id)
+        if not bus:
+            return {"error": "Bus not found."}, 404
+
+        # Define required fields
+        required_fields = ["username","cost_per_seat", "number_of_seats", "route", "travel_time", "number_plate", "image"]
+        missing_fields = [field for field in required_fields if field not in data]
+
+        if missing_fields:
+            return {
+                "warning": f"Missing fields: {', '.join(missing_fields)}. No changes made to these fields."
+            }, 400
+
+        try:
+            # Update the fields if they are provided in the request
+            if 'username' in data:
+                bus.username = data['username']
+            if 'cost_per_seat' in data:
+                bus.cost_per_seat = int(data['cost_per_seat'])
+            if 'number_of_seats' in data:
+                old_seats = int(bus.number_of_seats)
+                new_seats = int(data['number_of_seats'])
+                bus.number_of_seats = new_seats
+
+                if new_seats > old_seats:
+                    new_seat_numbers = range(old_seats + 1, new_seats + 1)
+                    for seat_num in new_seat_numbers:
+                        new_seat = Seat(
+                            seat_number=f"S{seat_num:03}",
+                            bus_id=bus.id
+                        )
+                        db.session.add(new_seat)
+                elif new_seats < old_seats:
+                    excess_seats = Seat.query.filter(Seat.bus_id == bus.id).order_by(Seat.id.desc()).limit(old_seats - new_seats).all()
+                    for seat in excess_seats:
+                        db.session.delete(seat)
+            if 'route' in data:
+                bus.route = data['route']
+            if 'travel_time' in data:
+                travel_time_str = data['travel_time']
+                bus.travel_time = datetime.strptime(travel_time_str, "%H:%M:%S").time()
+            if 'number_plate' in data:
+                bus.number_plate = data['number_plate']
+            if 'image' in data:
+                bus.image = data['image']
+
+            db.session.commit()
+            return {"message": "Bus updated successfully."}, 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+        
+
 class ViewBusesByDriver(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self, driver_id):
         """Get buses by driver"""
         buses = Bus.query.filter_by(driver_id=driver_id).all()
@@ -215,13 +288,15 @@ class ViewBusesByDriver(Resource):
                 'number_of_seats': bus.number_of_seats,
                 'route': bus.route,
                 'travel_time': bus.travel_time.isoformat() if bus.travel_time else None,
-                'number_plate': bus.number_plate
+                'number_plate': bus.number_plate,
+                'image':bus.image,
+                
             } for bus in buses
         ], 200
 
 
 class ViewBusById(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self, bus_id):
         """View a bus by ID"""
         bus = Bus.query.filter_by(id=bus_id).first()
@@ -237,11 +312,12 @@ class ViewBusById(Resource):
             'route': bus.route,
             'travel_time': bus.travel_time.isoformat(),
             'number_plate': bus.number_plate,
+            'image':bus.image
         }), 200
 
 
 class ViewBusesByDriver(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self, driver_id):
         """Get buses by driver"""
         buses = Bus.query.filter_by(driver_id=driver_id).all()
@@ -256,27 +332,28 @@ class ViewBusesByDriver(Resource):
             'number_of_seats': bus.number_of_seats,
             'route': bus.route,
             'travel_time': bus.travel_time.isoformat() if bus.travel_time else None,
-            'number_plate': bus.number_plate
+            'number_plate': bus.number_plate,
+            'image':bus.image,
         } for bus in buses], 200
 
 
 
 class DeleteBus(Resource):
-    @jwt_required()
+    # @jwt_required()
     def delete(self, bus_id):
         """Delete a bus by ID"""
         bus = Bus.query.get(bus_id)
         if bus:
             db.session.delete(bus)
             db.session.commit()
-            return jsonify({'message': 'Bus deleted successfully'}), 200
+            return ({'message': 'Bus deleted successfully'}), 200
         else:
-            return jsonify({'message': 'Bus not found'}), 404
+            return ({'message': 'Bus not found'}), 404
 
 
 #Scheduling Buses
 class GetScheduledBuses(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         """Get all scheduled buses
         ---
@@ -308,11 +385,9 @@ class GetScheduledBuses(Resource):
         } for scheduled_bus in scheduled_buses]
 
         return data, 200
-        
-
 
 class ScheduledBuses(Resource):
-    @jwt_required()
+    # @jwt_required()
     def post(self):
         """Create a new scheduled bus
         ---
@@ -375,11 +450,121 @@ class ScheduledBuses(Resource):
         except Exception as e:
             db.session.rollback()
             return {"error": "Failed to create scheduled bus.", "details": str(e)}, 500
+        
+class EditScheduledBuses(Resource):
+    def patch(self, schedule_id):
+        """Update an existing scheduled bus
+        ---
+        parameters:
+          - name: schedule_id
+            in: path
+            required: true
+            type: integer
+          - name: body
+            in: body
+            required: true
+            schema:
+              type: object
+              properties:
+                bus_id:
+                  type: integer
+                departure_time:
+                  type: string
+                  format: time
+                arrival_time:
+                  type: string
+                  format: time
+                travel_date:
+                  type: string
+                  format: date
+                available_seats:
+                  type: integer
+                occupied_seats:
+                  type: integer
+        responses:
+          200:
+            description: Scheduled bus updated successfully
+          400:
+            description: Error with missing fields or invalid data
+          404:
+            description: Scheduled bus not found
+        """
+        data = request.get_json()
+
+        if not data:
+            return {"error": "No input data provided."}, 400
+
+        schedule = Schedule.query.get(schedule_id)
+        if not schedule:
+            return {"error": "Scheduled bus not found."}, 404
+
+        # Define required fields
+        required_fields = ['bus_id', 'departure_time', 'arrival_time', 'travel_date', 'available_seats', 'occupied_seats']
+        missing_fields = [field for field in required_fields if field not in data]
+
+        if missing_fields:
+            return {
+                "warning": f"Missing fields: {', '.join(missing_fields)}. No changes made to these fields."
+            }, 400
+
+        try:
+            # Update the fields if they are provided in the request
+            if 'bus_id' in data:
+                schedule.bus_id = data['bus_id']
+            if 'departure_time' in data:
+                schedule.departure_time = datetime.strptime(data['departure_time'], "%H:%M:%S").time()
+            if 'arrival_time' in data:
+                schedule.arrival_time = datetime.strptime(data['arrival_time'], "%H:%M:%S").time()
+            if 'travel_date' in data:
+                schedule.travel_date = datetime.strptime(data['travel_date'], "%Y-%m-%d").date()
+            if 'available_seats' in data:
+                schedule.available_seats = data['available_seats']
+            if 'occupied_seats' in data:
+                schedule.occupied_seats = data['occupied_seats']
+
+            db.session.commit()
+            return {"message": "Scheduled bus updated successfully."}, 200
+        except ValueError:
+            return {"error": "Invalid date or time format."}, 400
+        except Exception as e:
+            db.session.rollback()
+            return {"error": "Failed to update scheduled bus.", "details": str(e)}, 500
+
+        
+class DeleteSchedule(Resource):
+    # @jwt_required()  # Protect this route if you want authentication
+    def delete(self, schedule_id):
+        # Fetch the schedule by ID
+        schedule = Schedule.query.get(schedule_id)
+
+        if not schedule:
+            return ({"msg": "Schedule not found"}), 404
+
+        # Delete the schedule
+        db.session.delete(schedule)
+        db.session.commit()
+
+        return ({"msg": "Schedule deleted successfully"}), 200
+    
+class ViewCustomers(Resource):
+    # @jwt_required()
+    def get(self):
+        """View all registered customers"""
+        customers = Customer.query.all()
+        
+        customer_list = [{
+            'id': customer.id,
+            'firstname': customer.firstname,
+            'lastname': customer.lastname,
+            'email': customer.email,
+        } for customer in customers]
+        
+        return {"customers": customer_list}, 200
 
 #Bus Cost per Seat
 
 class ViewBusCost(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self, bus_id):
         """Get the cost per seat of a bus
         ---
@@ -406,7 +591,7 @@ class ViewBusCost(Resource):
         }, 200
     
 class AddBusCostByID(Resource):
-    @jwt_required()
+    # @jwt_required()
     def post(self, bus_id):
         """Add cost per seat for a specific bus by ID
         ---
@@ -454,7 +639,7 @@ class AddBusCostByID(Resource):
             return {"error": "Failed to add bus cost per seat.", "details": str(e)}, 500
 
 class UpdateBusCostByID(Resource):
-    @jwt_required()
+    # @jwt_required()
     def put(self, bus_id):
         """Update the cost per seat of a specific bus by ID
         ---
@@ -498,17 +683,73 @@ class UpdateBusCostByID(Resource):
         except Exception as e:
             db.session.rollback()
             return {"error": "Failed to update bus cost.", "details": str(e)}, 500
+        
+class UpdateSeat(Resource):
+    def put(self, seat_id):
+        """Update a seat by ID."""
+        data = request.get_json()
+        bus_id = data.get('bus_id')  # Get bus_id from the request body
+
+        # Validate bus_id
+        if bus_id is None:
+            return {"message": "bus_id is required."}, 400
+
+        seat = Seat.query.get(seat_id)  # Retrieve the seat using seat_id from the route
+        if not seat:
+            return {"message": "Seat not found."}, 404
+
+        seat.bus_id = bus_id  # Update the bus_id
+        # Update other fields if necessary
+        db.session.commit()
+
+        return {"message": "Seat updated successfully."}, 200
+
+    
+class DeleteSeat(Resource):
+    def delete(self, seat_id):
+        """Delete a seat by ID.
+        ---
+        parameters:
+          - name: seat_id
+            in: path
+            type: integer
+            required: true
+            description: The ID of the seat to delete
+        responses:
+          200:
+            description: Seat successfully deleted
+          404:
+            description: Seat not found
+        """
+        # Query the database for the seat associated with the provided ID
+        seat = Seat.query.get(seat_id)
+
+        if not seat:
+            return {"message": "Seat not found."}, 404
+
+        # Delete the seat
+        db.session.delete(seat)
+        db.session.commit()
+
+        return {"message": "Seat successfully deleted."}, 200
+
 
 # Register the resources with the API
 driver_api.add_resource(Signup, "/signup")
 driver_api.add_resource(Login, "/login")
 driver_api.add_resource(ProtectedResource, "/protected")
 driver_api.add_resource(RegisterBuses, "/register/buses")
+driver_api.add_resource(EditBuses, "/edit-buses/<int:bus_id>")
 driver_api.add_resource(ViewBusesByDriver, '/buses/driver/<int:driver_id>')
+driver_api.add_resource(ViewCustomers, '/customers')
 driver_api.add_resource(ViewBusById, '/buses/<int:bus_id>')
 driver_api.add_resource(DeleteBus, '/bus/<int:bus_id>', endpoint='delete_bus')
 driver_api.add_resource(GetScheduledBuses, "/view_scheduled_buses")
 driver_api.add_resource(ScheduledBuses, "/schedule_buses")
+driver_api.add_resource(EditScheduledBuses, "/edit-scheduled_buses/<int:schedule_id>")
+driver_api.add_resource(DeleteSchedule, "/delete_scheduled_buses/<int:schedule_id>")
+driver_api.add_resource(UpdateSeat, "/update_seat")
+driver_api.add_resource(DeleteSeat, "/delete_seat/<int:seat_id>")
 driver_api.add_resource(ViewBusCost, '/buses/<int:bus_id>/cost', endpoint='get_bus_cost')
 driver_api.add_resource(AddBusCostByID, '/buses/<int:bus_id>/cost', endpoint='add_bus_cost_by_id')
 driver_api.add_resource(UpdateBusCostByID, '/buses/<int:bus_id>/cost', endpoint='update_bus_cost_by_id')

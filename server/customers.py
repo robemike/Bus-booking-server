@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request,make_response
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
 from .models import Customer, Booking, db,Bus
@@ -6,13 +6,13 @@ from datetime import datetime
 from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required
 
 
-customer_bp = Blueprint("customer_bp", __name__, url_prefix="/auth")
+customer_bp = Blueprint("customer_bp", __name__, url_prefix="/")
 bcrypt = Bcrypt()
 jwt = JWTManager()
 customer_api = Api(customer_bp)
 
 class ProtectedResource(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         current_user = get_jwt_identity() 
         return {"message": f"Hello, Customer {current_user}"}
@@ -113,9 +113,8 @@ class Login(Resource):
 #         return refresh()
     
 class ViewBookings(Resource):
-    @jwt_required()
     def get(self):
-        """Retrieve all bookings for the authenticated customer.
+        """Retrieve all bookings for the customer.
         ---
         responses:
           200:
@@ -123,7 +122,8 @@ class ViewBookings(Resource):
           404:
             description: No bookings found
         """
-        customer_id = get_jwt_identity()  # Get the current customer's ID
+        # You might want to replace this with an actual customer ID
+        customer_id = 1  # Hardcoding for demonstration; replace with actual logic
 
         # Query the database for bookings associated with this customer
         bookings = Booking.query.filter_by(customer_id=customer_id).all()
@@ -132,21 +132,10 @@ class ViewBookings(Resource):
             return {"message": "No bookings found."}, 404
 
         # Return the list of bookings
-        return [{
-            'id': booking.id,
-            'customer_id': booking.customer_id,
-            'bus_id': booking.bus_id,
-            'booking_date': booking.booking_date.isoformat(),
-            'number_of_seats': booking.number_of_seats,
-            'total_cost': booking.total_cost,
-            'destination': booking.destination,
-            'departure_time': str(booking.departure_time),
-            'current_address': booking.current_address
-
-        } for booking in bookings], 200
+        return make_response({"bookings": [booking.to_dict() for booking in bookings]}, 200)
     
 class AddBookings(Resource):
-    @jwt_required()
+    # @jwt_required()
     def post(self):
         data = request.get_json()
 
@@ -158,7 +147,8 @@ class AddBookings(Resource):
             "current_address",
             "number_of_seats",
             "destination", 
-            "bus_id"  
+            "bus_id",
+            "selected_seats"
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
@@ -167,12 +157,14 @@ class AddBookings(Resource):
                 "error": f"Missing required fields: {', '.join(missing_fields)}"
             }, 400
         
-        customer_id = get_jwt_identity()
+        # customer_id = get_jwt_identity()
+        customer_id=1
         departure_time_str = data.get('departure_time')
         destination = data.get('destination')
         number_of_seats = data.get('number_of_seats')
         current_address = data.get('current_address')
-        bus_id = data.get('bus_id')  # Retrieve bus_id from request data
+        bus_id = data.get('bus_id')  
+        selected_seats=data.get('selected_seats')
 
         # Convert departure_time from string to a time object
         try:
@@ -194,7 +186,8 @@ class AddBookings(Resource):
                 number_of_seats=number_of_seats,
                 current_address=current_address,
                 bus_id=bus_id, 
-                total_cost=total_cost  
+                total_cost=total_cost,
+                selected_seats=selected_seats 
             )
             db.session.add(new_booking)
             db.session.commit()
@@ -203,7 +196,51 @@ class AddBookings(Resource):
             db.session.rollback()
             return {"error": str(e)}, 500
         
+class UpdateBooking(Resource):
+    def put(self, booking_id):
+        """Update a booking by ID."""
+        data = request.get_json()
+        bus_id = data.get('bus_id') 
+        # Validate bus_id
+        if bus_id is None:
+            return {"message": "bus_id is required."}, 400
 
+        booking = Booking.query.get(booking_id)
+        if not booking:
+            return {"message": "Booking not found."}, 404
+
+        booking.bus_id = bus_id  # Make sure bus_id is valid
+        # Update other fields as needed
+        db.session.commit()
+
+        return {"message": "Booking updated successfully."}, 200
+class DeleteBooking(Resource):
+    def delete(self, booking_id):
+        """Delete a booking by its ID.
+        ---
+        parameters:
+          - name: booking_id
+            in: path
+            type: integer
+            required: true
+            description: The ID of the booking to delete
+        responses:
+          200:
+            description: Booking successfully deleted
+          404:
+            description: Booking not found
+        """
+        # Query the database for the booking associated with the provided ID
+        booking = Booking.query.get(booking_id)
+
+        if not booking:
+            return {"message": "Booking not found."}, 404
+
+        # Delete the booking
+        db.session.delete(booking)
+        db.session.commit()
+
+        return {"message": "Booking successfully deleted."}, 200
 
 customer_api.add_resource(Signup, "/signup")
 customer_api.add_resource(Login, "/login")
@@ -211,3 +248,5 @@ customer_api.add_resource(Login, "/login")
 customer_api.add_resource(ProtectedResource, "/protected")
 customer_api.add_resource(AddBookings, "/bookings",)
 customer_api.add_resource(ViewBookings, '/view_bookings')
+customer_api.add_resource(UpdateBooking, '/update_bookings')
+customer_api.add_resource(DeleteBooking, '/delete_booking/<int:booking_id>')

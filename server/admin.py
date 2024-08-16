@@ -1,10 +1,10 @@
-from flask import Blueprint, request
+from flask import Blueprint, request,make_response
 from flask_restful import Api, Resource
 from .models import Admin, Driver, Customer, Bus, Schedule, db
 from flask_jwt_extended import create_access_token, jwt_required,create_refresh_token, get_jwt_identity
 from flask_bcrypt import Bcrypt
 
-admin_bp = Blueprint('admin_bp', __name__, url_prefix='/admin/auth')
+admin_bp = Blueprint('admin_bp', __name__, url_prefix='/')
 api = Api(admin_bp)
 bcrypt = Bcrypt()
 
@@ -67,7 +67,7 @@ class AdminLogin(Resource):
             return {"error": "Invalid Admin credentials"}, 401
 
 class ViewDriverBuses(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         """Fetch all buses registered by the driver"""
         driver_id = get_jwt_identity() 
@@ -82,7 +82,7 @@ class ViewDriverBuses(Resource):
         } for bus in buses], 200
 
 class AddDriver(Resource):
-    @jwt_required()
+    # @jwt_required()
     def post(self):
         """Add a new driver"""
         data = request.get_json()
@@ -113,7 +113,7 @@ class AddDriver(Resource):
         return {"message": "Driver added successfully."}, 201
 
 class DeleteDriver(Resource):
-    @jwt_required()
+    # @jwt_required()
     def delete(self, driver_id):
         """Delete a driver"""
         driver = Driver.query.get(driver_id)
@@ -125,7 +125,7 @@ class DeleteDriver(Resource):
         return {"message": "Driver deleted successfully."}, 200
 
 class ViewCustomers(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         """View all registered customers"""
         customers = Customer.query.all()
@@ -141,7 +141,7 @@ class ViewCustomers(Resource):
 
 
 class ViewScheduledBuses(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         """View all scheduled buses"""
         try:
@@ -166,7 +166,7 @@ class ViewScheduledBuses(Resource):
             return {"error": str(e)}, 500
 
 class ViewDrivers(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         """Get all drivers
         ---
@@ -176,12 +176,12 @@ class ViewDrivers(Resource):
           403:
             description: User is not an admin
         """
-        current_user_id = get_jwt_identity()  # Get the current user's identity
+        # current_user_id = get_jwt_identity()  # Get the current user's identity
 
         # Check if the current user is an admin by querying the Admin model
-        admin_user = Admin.query.get(current_user_id) 
-        if not admin_user:
-            return {"error": "User is not an admin"}, 403
+        # admin_user = Admin.query.get(current_user_id) 
+        # if not admin_user:
+        #     return {"error": "User is not an admin"}, 403
 
         drivers = Driver.query.all()  
         if not drivers:
@@ -198,7 +198,7 @@ class ViewDrivers(Resource):
         } for driver in drivers], 200
     
 class ViewDriversByID(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self, driver_id):
         """Get driver by ID
         ---
@@ -237,7 +237,7 @@ class ViewDriversByID(Resource):
         }, 200
 
 class ViewBuses(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         """Get all buses
         ---
@@ -251,19 +251,22 @@ class ViewBuses(Resource):
         if not buses:
             return {"message": "No buses found."}, 404
 
-        return [{
-            'id': bus.id,
-            'username': bus.username,
-            'cost_per_seat': bus.cost_per_seat,
-            'number_of_seats': bus.number_of_seats,
-            'route': bus.route,
-            'travel_time': bus.travel_time.isoformat(), 
-            'number_plate': bus.number_plate,
-        } for bus in buses], 200
+        # return [{
+        #     'id': bus.id,
+        #     'username': bus.username,
+        #     'cost_per_seat': bus.cost_per_seat,
+        #     'number_of_seats': bus.number_of_seats,
+        #     'route': bus.route,
+        #     'travel_time': bus.travel_time.isoformat(), 
+        #     'number_plate': bus.number_plate,
+        #     'image':bus.image,
+        #     'seats':bus.seats
+        # } for bus in buses], 200
+        return make_response([bus.to_dict() for bus in buses],200)
     
 
 class ViewBusesByID(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self, bus_id):
         """Get bus by ID
         ---
@@ -322,6 +325,6 @@ api.add_resource(ViewDriverBuses, '/driver/buses')
 api.add_resource(AddDriver, '/drivers')
 api.add_resource(DeleteDriver, '/drivers/<int:driver_id>')
 api.add_resource(ViewCustomers, '/customers')
-api.add_resource(ViewBuses, '/buses', endpoint='view_buses')
+api.add_resource(ViewBuses, '/buses')
 api.add_resource(ViewBusesByID, '/buses/<int:bus_id>', endpoint='view_buses_by_id')
 api.add_resource(ViewScheduledBuses, '/scheduled_buses')

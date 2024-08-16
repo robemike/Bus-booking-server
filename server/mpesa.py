@@ -1,74 +1,98 @@
+ # #Mpesa stk
+from flask import Flask, request,jsonify
 import requests
-from flask import Flask, request, jsonify
+from requests.auth import HTTPBasicAuth
+from datetime import datetime
+import base64
 
-class MpesaClient:
-    def __init__(self, consumer_key, consumer_secret, shortcode, lipa_na_mpesa_online_shortcode, lipa_na_mpesa_online_shortcode_key):
-        self.consumer_key = consumer_key
-        self.consumer_secret = consumer_secret
-        self.shortcode = shortcode
-        self.lipa_na_mpesa_online_shortcode = lipa_na_mpesa_online_shortcode
-        self.lipa_na_mpesa_online_shortcode_key = lipa_na_mpesa_online_shortcode_key
 
-    def get_access_token(self):
-        api_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-        response = requests.get(api_url, auth=(self.consumer_key, self.consumer_secret))
-        if response.status_code == 200:
-            json_response = response.json()
-            return json_response['access_token']
-        else:
-            raise Exception("Could not get access token: " + response.text)
-
-    def stk_push(self, phone_number, amount, account_reference, transaction_desc, callback_url):
-        access_token = self.get_access_token()  # Get the access token
-        url = "https://sandbox.safaricom.co.ke/v1/payment/request"
-        headers = {
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "BusinessShortCode": self.shortcode,
-            "TransactionType": "CustomerPayBillOnline",
-            "Amount": amount,
-            "PartyA": phone_number,
-            "PartyB": self.lipa_na_mpesa_online_shortcode,
-            "PhoneNumber": phone_number,
-            "CallBackURL": callback_url,
-            "AccountReference": account_reference,
-            "TransactionDesc": transaction_desc
-        }
-
-        response = requests.post(url, json=payload, headers=headers)
-        if response.status_code == 200:
-            return response.json()  # Return the JSON response from the M-Pesa API
-        else:
-            raise Exception("STK push failed: " + response.text)  
 
 app = Flask(__name__)
 
-# Initialize your MpesaClient with actual credentials
-mpesa_client = MpesaClient(
-    consumer_key='YOUR_CONSUMER_KEY',
-    consumer_secret='YOUR_CONSUMER_SECRET',
-    shortcode='YOUR_SHORTCODE',
-    lipa_na_mpesa_online_shortcode='YOUR_LIPA_NA_MPESA_SHORTCODE',
-    lipa_na_mpesa_online_shortcode_key='YOUR_LIPA_NA_MPESA_SHORTCODE_KEY'
-)
+my_endpoint="https://f0f2-41-80-112-198.ngrok-free.app"
 
-@app.route('/stk_push', methods=['GET'])
-def stk_push():
-    # Retrieve parameters from the request
-    phone_number = request.args.get('phone_number', '0746411462')
-    amount = request.args.get('amount', 10, type=int)
-    account_reference = 'Laurine'
-    transaction_desc = 'Description'
-    callback_url = 'https://api.darajambili.com/express-payment'
-    
+
+@app.route('/')
+def home():
+    return 'Hello Mpesa!'
+
+@app.route('/api/mpesa-payment', methods=['POST'])
+def mpesa_payment():
     try:
-        # Call the stk_push method on the MpesaClient instance
-        response = mpesa_client.stk_push(phone_number, amount, account_reference, transaction_desc, callback_url)
-        return jsonify(response), 200  
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500  
+        data = request.get_json()  # Safely parse JSON
+        if not data:
+            return jsonify({"error": "Invalid JSON"}), 400
 
-if __name__ == '__main__':
+        amount = data.get('amount')
+        phone_number = data.get('phone_number')
+
+        # Proceed with further logic like initiating STK push
+        mpesa_response = {
+            "message": "STK Push initiated successfully",
+            "response_code": "0",
+            "transaction_id": "1234567890"
+        }
+
+        return jsonify(mpesa_response), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route('/pay')  
+def MpesaExpress():  
+    amount = request.args.get('amount')  
+    phone = request.args.get('phone')  
+
+    print(f"Phone number: {phone}")  
+    print(f"Amount: {amount}")        
+
+    endpoint = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"  
+    access_token = getAccessToken()  
+
+    headers = {  
+        'Content-Type': 'application/json',  
+        'Authorization': 'Bearer ' + access_token  
+    }  
+
+    Timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    password = base64.b64encode(f"{174379}{'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'}{Timestamp}".encode()).decode()
+
+    data = {  
+        "BusinessShortCode": "174379",  
+        "Password": password,  
+        "Timestamp": Timestamp,  
+        "TransactionType": "CustomerPayBillOnline",  
+        "Amount": 1,  
+        "PartyA": 254708374149,  
+        "PartyB": "174379",  
+        "PhoneNumber": 254711486087,
+        "CallBackURL": my_endpoint + "/lnmo-callback",  
+        "AccountReference": "BusLink",  
+        "TransactionDesc": "Payment of Bus Ticket"   
+    }  
+
+    res = requests.post(endpoint, json=data, headers=headers)  
+    print(res.json())  
+    if res.status_code == 200:  
+        return res.json()  
+    else:  
+        return {"error": "Payment failed", "details": res.text}, res.status_code
+
+    
+@app.route('/lnmo-callback', methods=['POST'])
+def incoming():
+    data=request.get_json()
+    print(data)
+    return "ok"
+
+def getAccessToken():
+    consumer_key = "Xj8JxM66iucQrrtPdhOXG5bTlz3l03lfyIcQ5Y7vDi6TZyJG"
+    consumer_secret = "GWdrGgv1faP9PXe066AMD6WIHXMfE7bQqQN6MLJaGgnBz5FdoXZ2hy7ZPwR7TwaI"
+    endpoint="https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+    r = requests.get(endpoint, auth=HTTPBasicAuth(consumer_key, consumer_secret))
+    data = r.json()
+    return data['access_token'] 
+  
+if(__name__ == "__main__"):  
     app.run(debug=True)
