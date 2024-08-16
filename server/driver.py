@@ -169,7 +169,7 @@ class RegisterBuses(Resource):
         if not data:
             return {"error": "No input data provided."}, 400
         
-        required_fields = ["username", "driver_id", "cost_per_seat", "number_of_seats", "route", "travel_time", "number_plate","image"]
+        required_fields = ["username", "cost_per_seat", "number_of_seats", "route", "travel_time", "number_plate","image"]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
         if missing_fields:
