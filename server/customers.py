@@ -18,7 +18,6 @@ class ProtectedResource(Resource):
         return {"message": f"Hello, Customer {current_user}"}
 
 class Signup(Resource):
-    @jwt_required()
     def post(self):
         data = request.get_json()
 
@@ -72,7 +71,6 @@ class Signup(Resource):
 
 
 class Login(Resource):
-    @jwt_required()
     def post(self):
         data = request.get_json()
 
