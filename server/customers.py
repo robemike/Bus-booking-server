@@ -1,7 +1,7 @@
 from flask import Blueprint, request,make_response
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Customer, Booking, db,Bus
+from models import Customer, Booking, db,Bus
 from datetime import datetime
 from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required
 
@@ -131,9 +131,26 @@ class ViewBookings(Resource):
         if not bookings:
             return {"message": "No bookings found."}, 404
 
-        # Return the list of bookings
-        return make_response({"bookings": [booking.to_dict() for booking in bookings]}, 200)
-    
+        # Retrieve the customer object associated with the bookings
+        customer = Customer.query.get(customer_id)
+        
+        if not customer:
+            return {"message": "Customer not found."}, 404
+
+        # Return the list of bookings along with the customer's phone number
+        return make_response(
+            {
+                "bookings": [
+                    {
+                        **booking.to_dict(),
+                        'phone_number': customer.phone_number
+                    }
+                    for booking in bookings
+                ]
+            },
+            200
+        )
+
 class AddBookings(Resource):
     # @jwt_required()
     def post(self):
@@ -148,7 +165,8 @@ class AddBookings(Resource):
             "number_of_seats",
             "destination", 
             "bus_id",
-            "selected_seats"
+            "selected_seats",
+            
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 

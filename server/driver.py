@@ -1,7 +1,7 @@
 from flask import Blueprint, request,jsonify,make_response
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Driver, db,Bus,Schedule,Customer,Seat
+from models import Driver, db,Bus,Schedule,Customer,Seat
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,jwt_required,get_jwt_identity
 from datetime import datetime
 
@@ -338,17 +338,17 @@ class ViewBusesByDriver(Resource):
 
 
 
-class DeleteBus(Resource):
-    # @jwt_required()
-    def delete(self, bus_id):
-        """Delete a bus by ID"""
-        bus = Bus.query.get(bus_id)
-        if bus:
-            db.session.delete(bus)
-            db.session.commit()
-            return ({'message': 'Bus deleted successfully'}), 200
-        else:
-            return ({'message': 'Bus not found'}), 404
+# class DeleteBus(Resource):
+#     # @jwt_required()
+#     def delete(self, bus_id):
+#         """Delete a bus by ID"""
+#         bus = Bus.query.get(bus_id)
+#         if bus:
+#             db.session.delete(bus)
+#             db.session.commit()
+#             return ({'message': 'Bus deleted successfully'}), 200
+#         else:
+#             return ({'message': 'Bus not found'}), 404
 
 
 #Scheduling Buses
@@ -557,6 +557,7 @@ class ViewCustomers(Resource):
             'firstname': customer.firstname,
             'lastname': customer.lastname,
             'email': customer.email,
+            'phone_number':customer.phone_number
         } for customer in customers]
         
         return {"customers": customer_list}, 200
@@ -743,13 +744,13 @@ driver_api.add_resource(EditBuses, "/edit-buses/<int:bus_id>")
 driver_api.add_resource(ViewBusesByDriver, '/buses/driver/<int:driver_id>')
 driver_api.add_resource(ViewCustomers, '/customers')
 driver_api.add_resource(ViewBusById, '/buses/<int:bus_id>')
-driver_api.add_resource(DeleteBus, '/bus/<int:bus_id>', endpoint='delete_bus')
+# driver_api.add_resource(DeleteBus, '/bus/<int:bus_id>', endpoint='delete_bus')
 driver_api.add_resource(GetScheduledBuses, "/view_scheduled_buses")
 driver_api.add_resource(ScheduledBuses, "/schedule_buses")
 driver_api.add_resource(EditScheduledBuses, "/edit-scheduled_buses/<int:schedule_id>")
 driver_api.add_resource(DeleteSchedule, "/delete_scheduled_buses/<int:schedule_id>")
-driver_api.add_resource(UpdateSeat, "/update_seat")
-driver_api.add_resource(DeleteSeat, "/delete_seat/<int:seat_id>")
+# driver_api.add_resource(UpdateSeat, "/update_seat")
+# driver_api.add_resource(DeleteSeat, "/delete_seat/<int:seat_id>")
 driver_api.add_resource(ViewBusCost, '/buses/<int:bus_id>/cost', endpoint='get_bus_cost')
 driver_api.add_resource(AddBusCostByID, '/buses/<int:bus_id>/cost', endpoint='add_bus_cost_by_id')
 driver_api.add_resource(UpdateBusCostByID, '/buses/<int:bus_id>/cost', endpoint='update_bus_cost_by_id')

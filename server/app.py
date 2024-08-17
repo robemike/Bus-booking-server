@@ -1,10 +1,10 @@
 import random
 from flask_jwt_extended import JWTManager,get_jwt,jwt_required
 from flask_cors import CORS
-from .customers import customer_bp,bcrypt as customer_bcrypt
-from .driver import driver_bp,bcrypt as driver_bcrypt
-from .admin import admin_bp,bcrypt as admin_bcrypt
-from .models import db,Bus,Customer,Booking,Seat
+from customers import customer_bp,bcrypt as customer_bcrypt
+from driver import driver_bp,bcrypt as driver_bcrypt
+from admin import admin_bp,bcrypt as admin_bcrypt
+from models import db,Bus,Customer,Booking,Seat
 from datetime import timedelta,date
 from flask import Flask,jsonify,request
 from flask_migrate import Migrate
@@ -222,6 +222,15 @@ def create_ticket():
             'current_address': new_ticket.current_address  
         }
     }, 201  
+
+@app.route('/buses/<int:bus_id>/seats')
+def get_bus_seats(bus_id):
+    bus = Bus.query.get(bus_id)
+
+    if not bus:
+        return {"message": "No bus found for this ID."}, 404
+
+    return jsonify([seat.to_dict() for seat in bus.seats]), 200
 
 
 if __name__ == "__main__":
