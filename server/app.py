@@ -104,7 +104,21 @@ def get_buses():
     customers=Customer.query.all()
     return jsonify([customer.to_dict() for customer in customers]),200
 
-#seat
+@app.route('/customers/phone_number/<int:customer_id>', methods=['GET'])
+def get_customer_phone_number(customer_id):
+    """View a specific customer's phone number"""
+    customer = Customer.query.get(customer_id)
+    
+    if not customer:
+        return {"error": "Customer not found"}, 404
+    
+    phone_number = {
+        'id': customer.id,
+        'phone_number': customer.phone_number
+    }
+    
+    return {"phone_number": phone_number}, 200
+
 @app.route('/seats', methods=['GET'],endpoint='view_seats')
 def get_seats():
     seats=Seat.query.all()
