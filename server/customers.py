@@ -1,4 +1,4 @@
-from flask import Blueprint, request,make_response
+from flask import Blueprint, request,make_response,session
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
 from .models import Customer, Booking, db,Bus
@@ -12,7 +12,7 @@ jwt = JWTManager()
 customer_api = Api(customer_bp)
 
 class ProtectedResource(Resource):
-    # @jwt_required()
+    @jwt_required()
     def get(self):
         current_user = get_jwt_identity() 
         return {"message": f"Hello, Customer {current_user}"}
@@ -122,8 +122,11 @@ class ViewBookings(Resource):
           404:
             description: No bookings found
         """
-        # You might want to replace this with an actual customer ID
-        customer_id = 1  # Hardcoding for demonstration; replace with actual logic
+        # Dynamically fetch the customer_id from the session
+        customer_id = session.get('customer_id')
+
+        if not customer_id:
+            return {"message": "User not authenticated."}, 401
 
         # Query the database for bookings associated with this customer
         bookings = Booking.query.filter_by(customer_id=customer_id).all()
@@ -150,9 +153,8 @@ class ViewBookings(Resource):
             },
             200
         )
-
 class AddBookings(Resource):
-    # @jwt_required()
+    @jwt_required()
     def post(self):
         data = request.get_json()
 
