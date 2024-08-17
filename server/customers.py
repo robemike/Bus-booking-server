@@ -11,7 +11,6 @@ bcrypt = Bcrypt()
 jwt = JWTManager()
 customer_api = Api(customer_bp)
 
-
 class ProtectedResource(Resource):
     @jwt_required()
     def get(self):
@@ -114,7 +113,7 @@ class Login(Resource):
 #         return refresh()
     
 class ViewBookings(Resource):
-    @jwt_required()
+    # @jwt_required()
     def get(self):
         """Retrieve all bookings for the customer.
         ---
@@ -156,7 +155,7 @@ class ViewBookings(Resource):
             200
         )
 class AddBookings(Resource):
-    @jwt_required()
+    # @jwt_required()
     def post(self):
         data = request.get_json()
 
@@ -219,7 +218,7 @@ class AddBookings(Resource):
             return {"error": str(e)}, 500
         
 class UpdateBooking(Resource):
-    @jwt_required()
+    # @jwt_required()
     def put(self, booking_id):
         """Update a booking by ID."""
         data = request.get_json()
@@ -239,7 +238,7 @@ class UpdateBooking(Resource):
         return {"message": "Booking updated successfully."}, 200
     
 class DeleteBooking(Resource):
-    @jwt_required()
+    # @jwt_required()
     def delete(self, booking_id):
         """Delete a booking by its ID.
         ---
