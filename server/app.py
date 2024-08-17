@@ -1,7 +1,7 @@
 import random
 from flask_jwt_extended import JWTManager,get_jwt,jwt_required
 from flask_cors import CORS
-from customers import customer_bp,bcrypt as customer_bcrypt
+from .customers import customer_bp,bcrypt as customer_bcrypt
 from .driver import driver_bp,bcrypt as driver_bcrypt
 from .admin import admin_bp,bcrypt as admin_bcrypt
 from .models import db,Bus,Customer,Booking,Seat

@@ -12,46 +12,65 @@ my_endpoint = "https://f0f2-41-80-112-198.ngrok-free.app"
 def home():
     return 'Hello Mpesa!'
 
-@app.route('/pay', methods=['POST'])
-def MpesaExpress():
-    data = request.json
-    amount = data.get('amount')
-    phone = data.get('phoneNumber')
+@app.route('/api/mpesa-payment', methods=['POST'])
+def mpesa_payment():
+    try:
+        data = request.get_json()  
+        if not data:
+            return jsonify({"error": "Invalid JSON"}), 400
 
-    print(f"Phone number: {phone}")
-    print(f"Amount: {amount}")
+        amount = data.get('amount')
+        phone_number = data.get('phone_number')
 
-    endpoint = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-    access_token = getAccessToken()
+        mpesa_response = {
+            "message": "STK Push initiated successfully",
+            "response_code": "0",
+            "transaction_id": "1234567890"
+        }
+        return jsonify(mpesa_response), 200
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + access_token
-    }
+@app.route('/pay')  
+def MpesaExpress():  
+    amount = request.args.get('amount')  
+    phone = request.args.get('phone')  
 
+    print(f"Phone number: {phone}")  
+    print(f"Amount: {amount}")        
+
+    endpoint = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"  
+    access_token = getAccessToken()  
+
+    headers = {  
+        'Content-Type': 'application/json',  
+        'Authorization': 'Bearer ' + access_token  
+    } 
+    
     Timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     password = base64.b64encode(f"{174379}{'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'}{Timestamp}".encode()).decode()
 
-    data = {
-        "BusinessShortCode": "174379",
-        "Password": password,
-        "Timestamp": Timestamp,
-        "TransactionType": "CustomerPayBillOnline",
-        "Amount": amount,
-        "PartyA": phone,
-        "PartyB": "174379",
-        "PhoneNumber": phone,
-        "CallBackURL": my_endpoint + "/lnmo-callback",
-        "AccountReference": "BusLink",
-        "TransactionDesc": "Payment of Bus Ticket"
-    }
+    data = {  
+        "BusinessShortCode": "174379",  
+        "Password": password,  
+        "Timestamp": Timestamp,  
+        "TransactionType": "CustomerPayBillOnline",  
+        "Amount": 1000,  
+        "PartyA": 254708374149,  
+        "PartyB": "174379",  
+        "PhoneNumber": 254719642923,
+        "CallBackURL": my_endpoint + "/lnmo-callback",  
+        "AccountReference": "BusLink",  
+        "TransactionDesc": "Payment of Bus Ticket"   
+    }  
 
-    res = requests.post(endpoint, json=data, headers=headers)
-    print(res.json())
-    if res.status_code == 200:
-        return jsonify(res.json())
-    else:
-        return jsonify({"error": "Payment failed", "details": res.text}), res.status_code
+    res = requests.post(endpoint, json=data, headers=headers)  
+    print(res.json())  
+    if res.status_code == 200:  
+        return res.json()  
+    else:  
+        return {"error": "Payment failed", "details": res.text}, res.status_code
 
 @app.route('/lnmo-callback', methods=['POST'])
 def incoming():

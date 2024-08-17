@@ -101,16 +101,6 @@ class Login(Resource):
         else:
             return {"error": "Invalid login credentials"}, 401
 
-
-# class RefreshToken(Resource):
-#     def post(self):
-#         @jwt_required(refresh=True)
-#         def refresh():
-#             current_user = get_jwt_identity()
-#             new_access_token = create_access_token(identity=current_user)
-#             return {"new_access_token": new_access_token}, 200
-
-#         return refresh()
     
 class ViewBookings(Resource):
     # @jwt_required()
