@@ -28,6 +28,7 @@ class ProtectedResource(Resource):
 
 #Auth
 class Signup(Resource):
+    @jwt_required()
     def post(self):
         """Sign up a new driver
         ---
@@ -112,6 +113,7 @@ class Signup(Resource):
 
     
 class Login(Resource):
+    @jwt_required()
     def post(self):
         """Driver login
         ---
@@ -211,6 +213,7 @@ class RegisterBuses(Resource):
 
         
 class EditBuses(Resource):
+    @jwt_required()
     def patch(self, bus_id):
         data = request.get_json()
 
@@ -452,6 +455,7 @@ class ScheduledBuses(Resource):
             return {"error": "Failed to create scheduled bus.", "details": str(e)}, 500
         
 class EditScheduledBuses(Resource):
+    @jwt_required()
     def patch(self, schedule_id):
         """Update an existing scheduled bus
         ---
@@ -563,7 +567,7 @@ class ViewCustomers(Resource):
         return {"customers": customer_list}, 200
     
 class ViewCustomerById(Resource):
-    # @jwt_required()
+    @jwt_required()
     def get(self, customer_id):
         """View a registered customer by ID"""
         customer = Customer.query.get(customer_id)
@@ -705,6 +709,7 @@ class UpdateBusCostByID(Resource):
             return {"error": "Failed to update bus cost.", "details": str(e)}, 500
         
 class UpdateSeat(Resource):
+    @jwt_required()
     def put(self, seat_id):
         """Update a seat by ID."""
         data = request.get_json()
@@ -726,6 +731,7 @@ class UpdateSeat(Resource):
 
     
 class DeleteSeat(Resource):
+    @jwt_required()
     def delete(self, seat_id):
         """Delete a seat by ID.
         ---

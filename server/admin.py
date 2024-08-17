@@ -9,6 +9,7 @@ api = Api(admin_bp)
 bcrypt = Bcrypt()
 
 class AdminSignup(Resource):
+    @jwt_required()
     def post(self):
         data = request.get_json()
 
@@ -45,6 +46,7 @@ class AdminSignup(Resource):
         return {"success": "Admin registered successfully"}, 201
 
 class AdminLogin(Resource):
+    @jwt_required()
     def post(self):
         """Admin login"""
         data = request.get_json()

@@ -18,6 +18,7 @@ class ProtectedResource(Resource):
         return {"message": f"Hello, Customer {current_user}"}
 
 class Signup(Resource):
+    @jwt_required()
     def post(self):
         data = request.get_json()
 
@@ -71,6 +72,7 @@ class Signup(Resource):
 
 
 class Login(Resource):
+    @jwt_required()
     def post(self):
         data = request.get_json()
 
@@ -113,6 +115,7 @@ class Login(Resource):
 #         return refresh()
     
 class ViewBookings(Resource):
+    @jwt_required()
     def get(self):
         """Retrieve all bookings for the customer.
         ---
@@ -217,6 +220,7 @@ class AddBookings(Resource):
             return {"error": str(e)}, 500
         
 class UpdateBooking(Resource):
+    @jwt_required()
     def put(self, booking_id):
         """Update a booking by ID."""
         data = request.get_json()
@@ -234,7 +238,9 @@ class UpdateBooking(Resource):
         db.session.commit()
 
         return {"message": "Booking updated successfully."}, 200
+    
 class DeleteBooking(Resource):
+    @jwt_required()
     def delete(self, booking_id):
         """Delete a booking by its ID.
         ---
