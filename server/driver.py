@@ -220,18 +220,9 @@ class ViewBuses(Resource):
         if not buses:
             return {"message": "No buses found."}, 404
 
-        buses_list = [{
-            'id': bus.id,
-            'username': bus.username,
-            'cost_per_seat': bus.cost_per_seat,
-            'number_of_seats': bus.number_of_seats,
-            'route': bus.route,
-            'travel_time': bus.travel_time.isoformat(),
-            'number_plate': bus.number_plate,
-            'image': bus.image
-        } for bus in buses]
+    
         
-        return make_response({"buses": buses_list}, 200)
+        return make_response([bus.to_dict() for bus in buses],200)
 class EditBuses(Resource):
     # @jwt_required()
     def patch(self, bus_id):
