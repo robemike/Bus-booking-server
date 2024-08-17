@@ -561,6 +561,25 @@ class ViewCustomers(Resource):
         } for customer in customers]
         
         return {"customers": customer_list}, 200
+    
+class ViewCustomerById(Resource):
+    # @jwt_required()
+    def get(self, customer_id):
+        """View a registered customer by ID"""
+        customer = Customer.query.get(customer_id)
+        
+        if not customer:
+            return {"message": "Customer not found."}, 404
+        
+        customer_data = {
+            'id': customer.id,
+            'firstname': customer.firstname,
+            'lastname': customer.lastname,
+            'email': customer.email,
+            'phone_number': customer.phone_number
+        }
+        
+        return make_response({"customer": customer_data}, 200)
 
 #Bus Cost per Seat
 
@@ -743,6 +762,7 @@ driver_api.add_resource(RegisterBuses, "/register/buses")
 driver_api.add_resource(EditBuses, "/edit-buses/<int:bus_id>")
 driver_api.add_resource(ViewBusesByDriver, '/buses/driver/<int:driver_id>')
 driver_api.add_resource(ViewCustomers, '/customers')
+driver_api.add_resource(ViewCustomerById, '/customers/<int:customer_id>')
 driver_api.add_resource(ViewBusById, '/buses/<int:bus_id>')
 # driver_api.add_resource(DeleteBus, '/bus/<int:bus_id>', endpoint='delete_bus')
 driver_api.add_resource(GetScheduledBuses, "/view_scheduled_buses")
