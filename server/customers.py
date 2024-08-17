@@ -11,6 +11,7 @@ bcrypt = Bcrypt()
 jwt = JWTManager()
 customer_api = Api(customer_bp)
 
+
 class ProtectedResource(Resource):
     @jwt_required()
     def get(self):
