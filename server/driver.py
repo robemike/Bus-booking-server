@@ -211,7 +211,27 @@ class RegisterBuses(Resource):
             db.session.rollback()
             return {"error": str(e)}, 500
 
+
+class ViewBuses(Resource):
+    def get(self):
+        """Retrieve all registered buses."""
+        buses = Bus.query.all()
         
+        if not buses:
+            return {"message": "No buses found."}, 404
+
+        buses_list = [{
+            'id': bus.id,
+            'username': bus.username,
+            'cost_per_seat': bus.cost_per_seat,
+            'number_of_seats': bus.number_of_seats,
+            'route': bus.route,
+            'travel_time': bus.travel_time.isoformat(),
+            'number_plate': bus.number_plate,
+            'image': bus.image
+        } for bus in buses]
+        
+        return make_response({"buses": buses_list}, 200)
 class EditBuses(Resource):
     # @jwt_required()
     def patch(self, bus_id):
@@ -765,6 +785,7 @@ driver_api.add_resource(Signup, "/signup")
 driver_api.add_resource(Login, "/login")
 driver_api.add_resource(ProtectedResource, "/protected")
 driver_api.add_resource(RegisterBuses, "/register/buses")
+driver_api.add_resource(ViewBuses, "//buses")
 driver_api.add_resource(EditBuses, "/edit-buses/<int:bus_id>")
 driver_api.add_resource(ViewBusesByDriver, '/buses/driver/<int:driver_id>')
 driver_api.add_resource(ViewCustomers, '/customers')
