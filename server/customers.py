@@ -4,7 +4,7 @@ from flask_restful import Api, Resource
 from .models import Customer, Booking, db,Bus,Schedule,Seat
 from datetime import datetime
 from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required
-
+import logging
 
 customer_bp = Blueprint("customer_bp", __name__, url_prefix="/")
 bcrypt = Bcrypt()
@@ -270,7 +270,6 @@ class DeleteBooking(Resource):
 
         return {"message": "Booking successfully deleted."}, 200
     
-
 class BookSeat(Resource):
 
     def post(self):
@@ -283,26 +282,43 @@ class BookSeat(Resource):
 
         schedule = Schedule.query.filter_by(bus_id=bus_id).first()
 
-        if schedule:
-            # Update the occupied seats and available seats
-            schedule.occupied_seats += len(selected_seats)
-            schedule.available_seats -= len(selected_seats)
-
-            # Ensure available_seats does not go below zero
-            if schedule.available_seats < 0:
-                schedule.available_seats = 0
-
-            # Update seat statuses
-            for seat_number in selected_seats:
-                seat = Seat.query.filter_by(bus_id=bus_id, seat_number=seat_number).first()
-                if seat:
-                    seat.status = 'booked'
-
-            db.session.commit()
-
-            return {'message': 'Seats booked successfully!'}, 200
-        else:
+        if not schedule:
             return {'error': 'Schedule not found'}, 404
+        
+        # Check the number of seats available
+        available_seats = schedule.available_seats
+        number_of_seats_to_book = len(selected_seats)
+
+        if number_of_seats_to_book > available_seats:
+            return {'error': 'Not enough seats available'}, 400
+
+        # Update the occupied seats and available seats
+        schedule.occupied_seats += number_of_seats_to_book
+        schedule.available_seats -= number_of_seats_to_book
+
+        # Ensure available_seats does not go below zero
+        if schedule.available_seats < 0:
+            schedule.available_seats = 0
+
+        # Update seat statuses
+        for seat_number in selected_seats:
+            seat = Seat.query.filter_by(bus_id=bus_id, seat_number=seat_number).first()
+            if seat:
+                if seat.status == 'available':  # Check if seat is available before booking
+                    seat.status = 'booked'
+                else:
+                    # If any seat is already booked, rollback and return an error
+                    db.session.rollback()
+                    return {'error': f'Seat {seat_number} is already booked'}, 400
+
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"Error committing to the database: {e}")
+            return {'error': 'Internal server error'}, 500
+
+        return {'message': 'Seats booked successfully!'}, 200
 
 customer_api.add_resource(Signup, "/signup")
 customer_api.add_resource(Login, "/login")
