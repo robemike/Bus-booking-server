@@ -161,7 +161,7 @@ class ViewAllBookings(Resource):
             return {"error": str(e)}, 500
 
 class AddBookings(Resource):
-    # @jwt_required()
+    # @jwt_required()  # Uncomment if using JWT authentication
     def post(self):
         data = request.get_json()
 
@@ -169,13 +169,12 @@ class AddBookings(Resource):
             return {"error": "No input data provided."}, 400
         
         required_fields = [
-            "departure_time", #travel_time
-            "current_address",# from
+            "departure_time",  # travel_time
+            "current_address",  # from
             "number_of_seats",
-            "destination", #to
+            "destination",  # to
             "bus_id",
             "selected_seats",
-            
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
@@ -184,14 +183,17 @@ class AddBookings(Resource):
                 "error": f"Missing required fields: {', '.join(missing_fields)}"
             }, 400
         
-        # customer_id = get_jwt_identity()
-        customer_id=1
+        # Get customer_id from the session
+        customer_id = session.get('customer_id')
+        if not customer_id:
+            return {"error": "User not authenticated."}, 401
+        
         departure_time_str = data.get('departure_time')
         destination = data.get('destination')
-        number_of_seats = data.get('number_of_seats')
+        number_of_seats = int(data.get('number_of_seats'))  # Ensure number_of_seats is an integer
         current_address = data.get('current_address')
-        bus_id = data.get('bus_id')  
-        selected_seats=data.get('selected_seats')
+        bus_id = int(data.get('bus_id'))  # Ensure bus_id is an integer
+        selected_seats = data.get('selected_seats')
 
         # Convert departure_time from string to a time object
         try:
@@ -209,7 +211,7 @@ class AddBookings(Resource):
             new_booking = Booking(
                 departure_time=departure_time,
                 destination=destination,
-                customer_id=customer_id,
+                customer_id=customer_id,  # Use customer_id from the session
                 number_of_seats=number_of_seats,
                 current_address=current_address,
                 bus_id=bus_id, 
