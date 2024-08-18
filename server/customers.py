@@ -174,7 +174,7 @@ class AddBookings(Resource):
             "destination",  # to
             "bus_id",
             "selected_seats",
-          
+            "customer_id" ,
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
