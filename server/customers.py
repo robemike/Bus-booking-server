@@ -4,7 +4,7 @@ from flask_restful import Api, Resource
 from .models import Customer, Booking, db,Bus,Schedule
 from datetime import datetime
 from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required
-
+import logging
 
 customer_bp = Blueprint("customer_bp", __name__, url_prefix="/")
 bcrypt = Bcrypt()
@@ -275,28 +275,8 @@ class DeleteBooking(Resource):
         return {"message": "Booking successfully deleted."}, 200
     
 class BookSeat(Resource):
+
     def post(self):
-        """Book seats for a specific bus.
-        ---
-        parameters:
-          - name: bus_id
-            in: json
-            type: integer
-            required: true
-            description: The ID of the bus for which to book seats
-          - name: selected_seats
-            in: json
-            type: array
-            items:
-              type: string
-            required: true
-            description: The list of selected seats to book
-        responses:
-          200:
-            description: Seats booked successfully
-          404:
-            description: Schedule not found
-        """
         data = request.get_json()
         bus_id = data.get('bus_id')
         selected_seats = data.get('selected_seats')
@@ -304,19 +284,17 @@ class BookSeat(Resource):
         if not bus_id or not selected_seats:
             return {'error': 'bus_id and selected_seats are required'}, 400
 
-        # Find the schedule for the bus
         schedule = Schedule.query.filter_by(bus_id=bus_id).first()
 
         if schedule:
-            # Check if there are enough available seats
-            if schedule.available_seats < len(selected_seats):
-                return {'error': 'Not enough available seats'}, 400
-
+            logging.info(f"Before booking: occupied_seats={schedule.occupied_seats}, available_seats={schedule.available_seats}")
+            
             # Update the occupied seats and available seats
             schedule.occupied_seats += len(selected_seats)
-            schedule.available_seats -= len(selected_seats)
+            schedule.available_seats += len(selected_seats)
 
-            # Save the changes to the database
+            logging.info(f"After booking: occupied_seats={schedule.occupied_seats}, available_seats={schedule.available_seats}")
+
             db.session.commit()
 
             return {'message': 'Seats booked successfully!'}, 200

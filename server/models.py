@@ -83,7 +83,7 @@ class Schedule(db.Model, SerializerMixin):
     arrival_time = db.Column(db.Time, nullable=False)
     travel_date = db.Column(db.Date, nullable=False)
     available_seats = db.Column(db.Integer, nullable=False)
-    occupied_seats = db.Column(db.Integer, nullable=False)
+    occupied_seats = db.Column(db.Integer, nullable=False,default=0)
 
     serialize_only = ('id', 'bus_id', 'departure_time', 'arrival_time', 'travel_date', 'available_seats', 'occupied_seats')
 
