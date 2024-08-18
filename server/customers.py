@@ -1,10 +1,10 @@
 from flask import Blueprint, request,make_response,session
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Customer, Booking, db,Bus,Schedule
+from .models import Customer, Booking, db,Bus,Schedule,Seat
 from datetime import datetime
 from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required
-import logging
+
 
 customer_bp = Blueprint("customer_bp", __name__, url_prefix="/")
 bcrypt = Bcrypt()
@@ -284,13 +284,19 @@ class BookSeat(Resource):
         schedule = Schedule.query.filter_by(bus_id=bus_id).first()
 
         if schedule:
-            logging.info(f"Before booking: occupied_seats={schedule.occupied_seats}, available_seats={schedule.available_seats}")
-
             # Update the occupied seats and available seats
             schedule.occupied_seats += len(selected_seats)
-            schedule.available_seats -= len(selected_seats)  
+            schedule.available_seats -= len(selected_seats)
 
-            logging.info(f"After booking: occupied_seats={schedule.occupied_seats}, available_seats={schedule.available_seats}")
+            # Ensure available_seats does not go below zero
+            if schedule.available_seats < 0:
+                schedule.available_seats = 0
+
+            # Update seat statuses
+            for seat_number in selected_seats:
+                seat = Seat.query.filter_by(bus_id=bus_id, seat_number=seat_number).first()
+                if seat:
+                    seat.status = 'booked'
 
             db.session.commit()
 
