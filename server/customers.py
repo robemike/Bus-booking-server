@@ -174,7 +174,7 @@ class AddBookings(Resource):
             "destination",  # to
             "bus_id",
             "selected_seats",
-            "customer_id" ,
+            "customer_id",
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
@@ -191,7 +191,6 @@ class AddBookings(Resource):
         selected_seats = data.get('selected_seats')
         customer_id = data.get('customer_id')  
 
-    
         try:
             departure_time = datetime.strptime(departure_time_str, "%H:%M:%S").time()
         except ValueError:
@@ -235,8 +234,7 @@ class UpdateBooking(Resource):
         if not booking:
             return {"message": "Booking not found."}, 404
 
-        booking.bus_id = bus_id  # Make sure bus_id is valid
-        # Update other fields as needed
+        booking.bus_id = bus_id  
         db.session.commit()
 
         return {"message": "Booking updated successfully."}, 200
