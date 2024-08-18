@@ -161,6 +161,7 @@ class ViewAllBookings(Resource):
             return {"error": str(e)}, 500
 
 class AddBookings(Resource):
+    @jwt_required()
     def post(self):
         data = request.get_json()
 
@@ -168,13 +169,13 @@ class AddBookings(Resource):
             return {"error": "No input data provided."}, 400
         
         required_fields = [
-            "departure_time",  # travel_time
-            "current_address",  # from
+            "departure_time", #travel_time
+            "current_address",# from
             "number_of_seats",
-            "destination",  # to
+            "destination", #to
             "bus_id",
             "selected_seats",
-            "customer_id",
+            
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
@@ -182,15 +183,17 @@ class AddBookings(Resource):
             return {
                 "error": f"Missing required fields: {', '.join(missing_fields)}"
             }, 400
+        
+        customer_id = get_jwt_identity()
 
         departure_time_str = data.get('departure_time')
         destination = data.get('destination')
-        number_of_seats = int(data.get('number_of_seats'))  
+        number_of_seats = data.get('number_of_seats')
         current_address = data.get('current_address')
-        bus_id = int(data.get('bus_id'))  
-        selected_seats = data.get('selected_seats')
-        customer_id = data.get('customer_id')  
+        bus_id = data.get('bus_id')  
+        selected_seats=data.get('selected_seats')
 
+        # Convert departure_time from string to a time object
         try:
             departure_time = datetime.strptime(departure_time_str, "%H:%M:%S").time()
         except ValueError:
@@ -206,7 +209,7 @@ class AddBookings(Resource):
             new_booking = Booking(
                 departure_time=departure_time,
                 destination=destination,
-                customer_id=customer_id, 
+                customer_id=customer_id,
                 number_of_seats=number_of_seats,
                 current_address=current_address,
                 bus_id=bus_id, 
@@ -287,8 +290,8 @@ class BookSeat(Resource):
         available_seats = schedule.available_seats
         number_of_seats_to_book = len(selected_seats)
 
-        if number_of_seats_to_book > available_seats:
-            return {'error': 'Not enough seats available'}, 400
+        # if number_of_seats_to_book > available_seats:
+        #     return {'error': 'Not enough seats available'}, 400
 
         # Update the occupied seats and available seats
         schedule.occupied_seats += number_of_seats_to_book
