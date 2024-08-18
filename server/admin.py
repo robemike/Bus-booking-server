@@ -321,7 +321,7 @@ class ViewBusesByID(Resource):
 
 api.add_resource(AdminSignup, '/signup')
 api.add_resource(AdminLogin, '/login')
-api.add_resource(ViewDrivers, '/drivers')
+api.add_resource(ViewDrivers, '/view_drivers')
 api.add_resource(ViewDriversByID, '/drivers/<int:driver_id>', endpoint='view_driver_by_id')
 api.add_resource(ViewDriverBuses, '/driver/buses')
 api.add_resource(AddDriver, '/drivers')

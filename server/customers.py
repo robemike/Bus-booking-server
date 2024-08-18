@@ -270,6 +270,7 @@ class DeleteBooking(Resource):
 
         return {"message": "Booking successfully deleted."}, 200
     
+
 class BookSeat(Resource):
 
     def post(self):
@@ -284,10 +285,10 @@ class BookSeat(Resource):
 
         if schedule:
             logging.info(f"Before booking: occupied_seats={schedule.occupied_seats}, available_seats={schedule.available_seats}")
-            
+
             # Update the occupied seats and available seats
             schedule.occupied_seats += len(selected_seats)
-            schedule.available_seats += len(selected_seats)
+            schedule.available_seats -= len(selected_seats)  
 
             logging.info(f"After booking: occupied_seats={schedule.occupied_seats}, available_seats={schedule.available_seats}")
 
@@ -296,7 +297,6 @@ class BookSeat(Resource):
             return {'message': 'Seats booked successfully!'}, 200
         else:
             return {'error': 'Schedule not found'}, 404
-        
 
 customer_api.add_resource(Signup, "/signup")
 customer_api.add_resource(Login, "/login")
