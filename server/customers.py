@@ -161,7 +161,6 @@ class ViewAllBookings(Resource):
             return {"error": str(e)}, 500
 
 class AddBookings(Resource):
-    # @jwt_required()  # Uncomment if using JWT authentication
     def post(self):
         data = request.get_json()
 
@@ -175,6 +174,7 @@ class AddBookings(Resource):
             "destination",  # to
             "bus_id",
             "selected_seats",
+            "customer_id"  # Explicitly require customer_id in the data
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
@@ -182,20 +182,16 @@ class AddBookings(Resource):
             return {
                 "error": f"Missing required fields: {', '.join(missing_fields)}"
             }, 400
-        
-        # Get customer_id from the session
-        customer_id = session.get('customer_id')
-        if not customer_id:
-            return {"error": "User not authenticated."}, 401
-        
+
         departure_time_str = data.get('departure_time')
         destination = data.get('destination')
-        number_of_seats = int(data.get('number_of_seats'))  # Ensure number_of_seats is an integer
+        number_of_seats = int(data.get('number_of_seats'))  
         current_address = data.get('current_address')
-        bus_id = int(data.get('bus_id'))  # Ensure bus_id is an integer
+        bus_id = int(data.get('bus_id'))  
         selected_seats = data.get('selected_seats')
+        customer_id = data.get('customer_id')  
 
-        # Convert departure_time from string to a time object
+    
         try:
             departure_time = datetime.strptime(departure_time_str, "%H:%M:%S").time()
         except ValueError:
@@ -211,7 +207,7 @@ class AddBookings(Resource):
             new_booking = Booking(
                 departure_time=departure_time,
                 destination=destination,
-                customer_id=customer_id,  # Use customer_id from the session
+                customer_id=customer_id, 
                 number_of_seats=number_of_seats,
                 current_address=current_address,
                 bus_id=bus_id, 
