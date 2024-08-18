@@ -174,7 +174,7 @@ class AddBookings(Resource):
             "destination",  # to
             "bus_id",
             "selected_seats",
-            # "customer_id"  # Explicitly require customer_id in the data
+          
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
@@ -189,7 +189,7 @@ class AddBookings(Resource):
         current_address = data.get('current_address')
         bus_id = int(data.get('bus_id'))  
         selected_seats = data.get('selected_seats')
-        # customer_id = data.get('customer_id')  
+        customer_id = data.get('customer_id')  
 
     
         try:
@@ -207,7 +207,7 @@ class AddBookings(Resource):
             new_booking = Booking(
                 departure_time=departure_time,
                 destination=destination,
-                # customer_id=customer_id, 
+                customer_id=customer_id, 
                 number_of_seats=number_of_seats,
                 current_address=current_address,
                 bus_id=bus_id, 
