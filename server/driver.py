@@ -1,7 +1,7 @@
 from flask import Blueprint, request,jsonify,make_response
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Driver, db,Bus,Schedule,Customer,Seat
+from models import Driver, db,Bus,Schedule,Customer,Seat
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,jwt_required,get_jwt_identity
 from datetime import datetime
 
@@ -352,17 +352,17 @@ class ViewBusesByDriver(Resource):
 
 
 
-# class DeleteBus(Resource):
-#     # @jwt_required()
-#     def delete(self, bus_id):
-#         """Delete a bus by ID"""
-#         bus = Bus.query.get(bus_id)
-#         if bus:
-#             db.session.delete(bus)
-#             db.session.commit()
-#             return ({'message': 'Bus deleted successfully'}), 200
-#         else:
-#             return ({'message': 'Bus not found'}), 404
+class DeleteBus(Resource):
+    # @jwt_required()
+    def delete(self, bus_id):
+        """Delete a bus by ID"""
+        bus = Bus.query.get(bus_id)
+        if bus:
+            db.session.delete(bus)
+            db.session.commit()
+            return ({'message': 'Bus deleted successfully'}), 200
+        else:
+            return ({'message': 'Bus not found'}), 404
 
 
 #Scheduling Buses
@@ -399,6 +399,48 @@ class GetScheduledBuses(Resource):
         } for scheduled_bus in scheduled_buses]
 
         return data, 200
+    
+class ViewScheduledBusByID(Resource):
+    def get(self, bus_id):
+        """Get a scheduled bus by ID
+        ---
+        parameters:
+          - in: path
+            name: bus_id
+            required: true
+            schema:
+              type: integer
+            description: The ID of the scheduled bus
+        responses:
+          200:
+            description: Scheduled bus details
+          404:
+            description: Scheduled bus not found
+        """
+        # Query the database for the scheduled bus with the given ID
+        scheduled_bus = Schedule.query.filter_by(bus_id=bus_id).first()
+
+        if not scheduled_bus:
+            return {"message": "Scheduled bus not found."}, 404
+
+        # Prepare the data for the response
+        data = {
+            "id": scheduled_bus.id,
+            'bus_id': scheduled_bus.bus_id,
+            'departure_time': scheduled_bus.departure_time.isoformat(),
+            'arrival_time': scheduled_bus.arrival_time.isoformat(),
+            'travel_date': scheduled_bus.travel_date.isoformat(),
+            'available_seats': scheduled_bus.available_seats,
+            'occupied_seats': scheduled_bus.occupied_seats,
+            'bus': {
+                'id': scheduled_bus.bus.id,
+                'username': scheduled_bus.bus.username,
+                'number_plate': scheduled_bus.bus.number_plate,
+            } if scheduled_bus.bus else None
+        }
+
+        return data, 200
+
 
 class ScheduledBuses(Resource):
     # @jwt_required()
@@ -741,34 +783,35 @@ class UpdateSeat(Resource):
         return {"message": "Seat updated successfully."}, 200
 
     
-class DeleteSeat(Resource):
-    # @jwt_required()
-    def delete(self, seat_id):
-        """Delete a seat by ID.
+class DeleteSeatsByBus(Resource):
+    def delete(self, bus_id):
+        """Delete all seats associated with a specific bus ID.
         ---
         parameters:
-          - name: seat_id
+          - name: bus_id
             in: path
             type: integer
             required: true
-            description: The ID of the seat to delete
+            description: The ID of the bus whose seats are to be deleted
         responses:
           200:
-            description: Seat successfully deleted
+            description: Seats successfully deleted
           404:
-            description: Seat not found
+            description: No seats found for the given bus ID
         """
-        # Query the database for the seat associated with the provided ID
-        seat = Seat.query.get(seat_id)
+        # Query the database for seats associated with the provided bus_id
+        seats = Seat.query.filter_by(bus_id=bus_id).all()
 
-        if not seat:
-            return {"message": "Seat not found."}, 404
+        if not seats:
+            return {"message": "No seats found for the given bus ID."}, 404
 
-        # Delete the seat
-        db.session.delete(seat)
+        # Delete all seats
+        for seat in seats:
+            db.session.delete(seat)
+        
         db.session.commit()
 
-        return {"message": "Seat successfully deleted."}, 200
+        return {"message": "Seats successfully deleted."}, 200
 
 
 # Register the resources with the API
@@ -776,19 +819,20 @@ driver_api.add_resource(Signup, "/signup")
 driver_api.add_resource(Login, "/login")
 driver_api.add_resource(ProtectedResource, "/protected")
 driver_api.add_resource(RegisterBuses, "/register/buses")
-driver_api.add_resource(ViewBuses, "//buses")
+driver_api.add_resource(ViewBuses, "/buses")
 driver_api.add_resource(EditBuses, "/edit-buses/<int:bus_id>")
 driver_api.add_resource(ViewBusesByDriver, '/buses/driver/<int:driver_id>')
 driver_api.add_resource(ViewCustomers, '/customers')
 driver_api.add_resource(ViewCustomerById, '/customers/<int:customer_id>')
 driver_api.add_resource(ViewBusById, '/buses/<int:bus_id>')
-# driver_api.add_resource(DeleteBus, '/bus/<int:bus_id>', endpoint='delete_bus')
+driver_api.add_resource(DeleteBus, '/delete-bus/<int:bus_id>')
 driver_api.add_resource(GetScheduledBuses, "/view_scheduled_buses")
+driver_api.add_resource(ViewScheduledBusByID, "/view_scheduled_buses/<int:bus_id>")
 driver_api.add_resource(ScheduledBuses, "/schedule_buses")
 driver_api.add_resource(EditScheduledBuses, "/edit-scheduled_buses/<int:schedule_id>")
 driver_api.add_resource(DeleteSchedule, "/delete_scheduled_buses/<int:schedule_id>")
 # driver_api.add_resource(UpdateSeat, "/update_seat")
-# driver_api.add_resource(DeleteSeat, "/delete_seat/<int:seat_id>")
+driver_api.add_resource(DeleteSeatsByBus, '/seats/<int:bus_id>')
 driver_api.add_resource(ViewBusCost, '/buses/<int:bus_id>/cost', endpoint='get_bus_cost')
 driver_api.add_resource(AddBusCostByID, '/buses/<int:bus_id>/cost', endpoint='add_bus_cost_by_id')
 driver_api.add_resource(UpdateBusCostByID, '/buses/<int:bus_id>/cost', endpoint='update_bus_cost_by_id')

@@ -1,7 +1,7 @@
 from flask import Blueprint, request,make_response,session
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Customer, Booking, db,Bus
+from models import Customer, Booking, db,Bus
 from datetime import datetime
 from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required
 
@@ -103,7 +103,6 @@ class Login(Resource):
 
     
 class ViewBookings(Resource):
-    # @jwt_required()
     def get(self):
         """Retrieve all bookings for the customer.
         ---
@@ -144,6 +143,23 @@ class ViewBookings(Resource):
             },
             200
         )
+class ViewAllBookings(Resource):
+    def get(self):
+        """Retrieve all bookings."""
+        try:
+            # Query all bookings
+            bookings = Booking.query.all()
+            
+            if not bookings:
+                return {"message": "No bookings found."}, 404
+
+            # Serialize bookings
+            bookings_list = [booking.to_dict() for booking in bookings]
+            return (bookings_list)
+        
+        except Exception as e:
+            return {"error": str(e)}, 500
+
 class AddBookings(Resource):
     # @jwt_required()
     def post(self):
@@ -261,6 +277,7 @@ customer_api.add_resource(Login, "/login")
 # customer_api.add_resource(RefreshToken, "/refresh")
 customer_api.add_resource(ProtectedResource, "/protected")
 customer_api.add_resource(AddBookings, "/bookings",)
+customer_api.add_resource(ViewAllBookings, '/view_all_bookings')
 customer_api.add_resource(ViewBookings, '/view_bookings')
 customer_api.add_resource(UpdateBooking, '/update_bookings')
 customer_api.add_resource(DeleteBooking, '/delete_booking/<int:booking_id>')

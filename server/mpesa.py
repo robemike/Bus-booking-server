@@ -22,11 +22,7 @@ def mpesa_payment():
         amount = data.get('amount')
         phone_number = data.get('phone_number')
 
-        mpesa_response = {
-            "message": "STK Push initiated successfully",
-            "response_code": "0",
-            "transaction_id": "1234567890"
-        }
+        mpesa_response = mpesa_payment(amount, phone_number)
         return jsonify(mpesa_response), 200
     
     except Exception as e:
@@ -35,10 +31,7 @@ def mpesa_payment():
 @app.route('/pay')  
 def MpesaExpress():  
     amount = request.args.get('amount')  
-    phone = request.args.get('phone')  
-
-    print(f"Phone number: {phone}")  
-    print(f"Amount: {amount}")        
+    phone_number = request.args.get('phone_number')  
 
     endpoint = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"  
     access_token = getAccessToken()  
@@ -56,22 +49,17 @@ def MpesaExpress():
         "Password": password,  
         "Timestamp": Timestamp,  
         "TransactionType": "CustomerPayBillOnline",  
-        "Amount": 1000,  
-        "PartyA": 254708374149,  
+        "Amount": amount,  
+        "PartyA": phone_number,  
         "PartyB": "174379",  
-        "PhoneNumber": 254719642923,
+        "PhoneNumber": phone_number,
         "CallBackURL": my_endpoint + "/lnmo-callback",  
         "AccountReference": "BusLink",  
         "TransactionDesc": "Payment of Bus Ticket"   
-    }  
+    }
 
-    res = requests.post(endpoint, json=data, headers=headers)  
-    print(res.json())  
-    if res.status_code == 200:  
-        return res.json()  
-    else:  
-        return {"error": "Payment failed", "details": res.text}, res.status_code
-
+    response = requests.post(endpoint, json=data, headers=headers)  
+    return response.json()
 @app.route('/lnmo-callback', methods=['POST'])
 def incoming():
     data = request.get_json()
@@ -88,3 +76,6 @@ def getAccessToken():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+
