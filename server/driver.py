@@ -1,7 +1,7 @@
 from flask import Blueprint, request,jsonify,make_response
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Driver, db,Bus,Schedule,Customer,Seat
+from .models import Driver, db,Bus,Schedule,Customer,Seat,Booking
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,jwt_required,get_jwt_identity
 from datetime import datetime
 
@@ -812,6 +812,23 @@ class DeleteSeatsByBus(Resource):
         db.session.commit()
 
         return {"message": "Seats successfully deleted."}, 200
+    
+class ViewAllBookings(Resource):
+    def get(self):
+        """Retrieve all bookings."""
+        try:
+            # Query all bookings
+            bookings = Booking.query.all()
+            
+            if not bookings:
+                return {"message": "No bookings found."}, 404
+
+            # Serialize bookings
+            bookings_list = [booking.to_dict() for booking in bookings]
+            return (bookings_list)
+        
+        except Exception as e:
+            return {"error": str(e)}, 500
 
 
 # Register the resources with the API
@@ -819,6 +836,7 @@ driver_api.add_resource(Signup, "/signup")
 driver_api.add_resource(Login, "/login")
 driver_api.add_resource(ProtectedResource, "/protected")
 driver_api.add_resource(RegisterBuses, "/register/buses")
+driver_api.add_resource(ViewAllBookings, '/view_all_bookings')
 driver_api.add_resource(ViewBuses, "/buses")
 driver_api.add_resource(EditBuses, "/edit-buses/<int:bus_id>")
 driver_api.add_resource(ViewBusesByDriver, '/buses/driver/<int:driver_id>')
