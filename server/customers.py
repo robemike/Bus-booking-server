@@ -309,8 +309,8 @@ class BookSeat(Resource):
 
         if schedule:
             # Check if there are enough available seats
-            if schedule.available_seats < len(selected_seats):
-                return {'error': 'Not enough available seats'}, 400
+            # if schedule.available_seats < len(selected_seats):
+            #     return {'error': 'Not enough available seats'}, 400
 
             # Update the occupied seats and available seats
             schedule.occupied_seats += len(selected_seats)

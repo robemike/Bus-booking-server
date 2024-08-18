@@ -59,8 +59,8 @@ driver_api = Api(driver_bp)
 bcrypt = Bcrypt(app)
 
 
-@app.route('/')
-def home():
+@app.route('/mpesa')
+def mpesa_home():
     return 'Hello Mpesa!'
 
 @app.route('/api/mpesa-payment', methods=['POST'])
@@ -168,7 +168,7 @@ app.register_blueprint(admin_bp)
     
 #home
 @app.route("/")
-def mpesa_home():
+def home():
     return {"msg":"Welcome to Bus Booking App"}
 
 #Customers
