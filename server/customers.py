@@ -69,7 +69,7 @@ class Signup(Resource):
         db.session.add(new_customer)
         db.session.commit()
 
-        return {"message": "Customer registered successfully","access_token":access_token}, 201
+        return {"message": "Customer registered successfully","access_token":access_token, "new_customer":new_customer}, 201
 
 
 class Login(Resource):
