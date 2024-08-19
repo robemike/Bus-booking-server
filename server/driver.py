@@ -211,21 +211,10 @@ class RegisterBuses(Resource):
             db.session.rollback()
             return {"error": str(e)}, 500
 
-
 class ViewBuses(Resource):
     def get(self):
         buses = Bus.query.all()
-        bus_data = [{
-            'id': bus.id,
-            'username': bus.username,
-            'imageUrl': bus.image_url,
-            'number_of_seats': bus.number_of_seats,
-            'cost_per_seat': bus.cost_per_seat,
-            'route': bus.route,
-            'travel_time': bus.travel_time,
-            'number_plate': bus.number_plate,
-            'available_seats': bus.available_seats 
-        } for bus in buses]
+        bus_data = [bus.to_dict() for bus in buses]  
         return bus_data, 200
     
 class EditBuses(Resource):
