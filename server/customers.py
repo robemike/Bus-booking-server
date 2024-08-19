@@ -3,7 +3,7 @@ from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
 from .models import Customer, Booking, db,Bus,Schedule,Seat
 from datetime import datetime
-from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required
+from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required,current_user
 import logging
 
 customer_bp = Blueprint("customer_bp", __name__, url_prefix="/")
@@ -11,8 +11,26 @@ bcrypt = Bcrypt()
 jwt = JWTManager()
 customer_api = Api(customer_bp)
 
+
+@jwt.user_identity_loader
+def user_identity_lookup(user):
+    return user
+
+
+@jwt.user_lookup_loader
+def user_lookup_callback(_jwt_header, jwt_data):
+    identity = jwt_data["sub"]
+    return Customer.query.filter_by(id=identity).one_or_none()
+
+
+class CheckSession(Resource):
+    def get(self):
+        return make_response(current_user.to_dict(), 200)
+
+
+customer_api.add_resource(CheckSession, "/check_session", endpoint="check_session")
+    
 class ProtectedResource(Resource):
-    @jwt_required()
     def get(self):
         current_user = get_jwt_identity() 
         return {"message": f"Hello, Customer {current_user}"}
@@ -228,7 +246,6 @@ class AddBookings(Resource):
             db.session.rollback()
             return {"error": str(e)}, 500
 class UpdateBooking(Resource):
-    # @jwt_required()
     def put(self, booking_id):
         """Update a booking by ID."""
         data = request.get_json()
@@ -247,7 +264,6 @@ class UpdateBooking(Resource):
         return {"message": "Booking updated successfully."}, 200
     
 class DeleteBooking(Resource):
-    # @jwt_required()
     def delete(self, booking_id):
         """Delete a booking by its ID.
         ---

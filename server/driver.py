@@ -13,7 +13,6 @@ driver_api = Api(driver_bp)
 
 
 class ProtectedResource(Resource):
-    @jwt_required()
     def get(self):
         """Get protected resource
         ---
@@ -129,7 +128,6 @@ class Login(Resource):
 
 #Register Bus
 class RegisterBuses(Resource):
-    # @jwt_required()
     def post(self):
         data = request.get_json()
 
@@ -183,7 +181,6 @@ class ViewBuses(Resource):
         return bus_data, 200
     
 class EditBuses(Resource):
-    # @jwt_required()
     def patch(self, bus_id):
         data = request.get_json()
 
@@ -245,7 +242,6 @@ class EditBuses(Resource):
         
 
 class ViewBusesByDriver(Resource):
-    # @jwt_required()
     def get(self, driver_id):
         """Get buses by driver"""
         buses = Bus.query.filter_by(driver_id=driver_id).all()
@@ -269,7 +265,6 @@ class ViewBusesByDriver(Resource):
 
 
 class ViewBusById(Resource):
-    # @jwt_required()
     def get(self, bus_id):
         """View a bus by ID"""
         bus = Bus.query.filter_by(id=bus_id).first()
@@ -290,7 +285,6 @@ class ViewBusById(Resource):
 
 
 class ViewBusesByDriver(Resource):
-    # @jwt_required()
     def get(self, driver_id):
         """Get buses by driver"""
         buses = Bus.query.filter_by(driver_id=driver_id).all()
@@ -312,7 +306,6 @@ class ViewBusesByDriver(Resource):
 
 
 class DeleteBus(Resource):
-    # @jwt_required()
     def delete(self, bus_id):
         """Delete a bus by ID"""
         bus = Bus.query.get(bus_id)
@@ -326,7 +319,6 @@ class DeleteBus(Resource):
 
 #Scheduling Buses
 class GetScheduledBuses(Resource):
-    # @jwt_required()
     def get(self):
         """Get all scheduled buses
         ---
@@ -402,7 +394,6 @@ class ViewScheduledBusByID(Resource):
 
 
 class ScheduledBuses(Resource):
-    # @jwt_required()
     def post(self):
         """Create a new scheduled bus
         ---
@@ -467,7 +458,6 @@ class ScheduledBuses(Resource):
             return {"error": "Failed to create scheduled bus.", "details": str(e)}, 500
         
 class EditScheduledBuses(Resource):
-    # @jwt_required()
     def patch(self, schedule_id):
         """Update an existing scheduled bus
         ---
@@ -548,7 +538,7 @@ class EditScheduledBuses(Resource):
 
         
 class DeleteSchedule(Resource):
-    # @jwt_required()  # Protect this route if you want authentication
+ # Protect this route if you want authentication
     def delete(self, schedule_id):
         # Fetch the schedule by ID
         schedule = Schedule.query.get(schedule_id)
@@ -563,7 +553,6 @@ class DeleteSchedule(Resource):
         return ({"msg": "Schedule deleted successfully"}), 200
     
 class ViewCustomers(Resource):
-    # @jwt_required()
     def get(self):
         """View all registered customers"""
         customers = Customer.query.all()
@@ -579,7 +568,6 @@ class ViewCustomers(Resource):
         return {"customers": customer_list}, 200
     
 class ViewCustomerById(Resource):
-    # @jwt_required()
     def get(self, customer_id):
         """View a registered customer by ID"""
         customer = Customer.query.get(customer_id)
@@ -600,7 +588,6 @@ class ViewCustomerById(Resource):
 #Bus Cost per Seat
 
 class ViewBusCost(Resource):
-    # @jwt_required()
     def get(self, bus_id):
         """Get the cost per seat of a bus
         ---
@@ -627,7 +614,6 @@ class ViewBusCost(Resource):
         }, 200
     
 class AddBusCostByID(Resource):
-    # @jwt_required()
     def post(self, bus_id):
         """Add cost per seat for a specific bus by ID
         ---
@@ -675,7 +661,6 @@ class AddBusCostByID(Resource):
             return {"error": "Failed to add bus cost per seat.", "details": str(e)}, 500
 
 class UpdateBusCostByID(Resource):
-    # @jwt_required()
     def put(self, bus_id):
         """Update the cost per seat of a specific bus by ID
         ---
@@ -721,7 +706,6 @@ class UpdateBusCostByID(Resource):
             return {"error": "Failed to update bus cost.", "details": str(e)}, 500
         
 class UpdateSeat(Resource):
-    # @jwt_required()
     def put(self, seat_id):
         """Update a seat by ID."""
         data = request.get_json()
