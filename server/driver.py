@@ -1,7 +1,7 @@
 from flask import Blueprint, request,jsonify,make_response
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from models import Driver, db,Bus,Schedule,Customer,Seat,Booking
+from .models import Driver, db,Bus,Schedule,Customer,Seat,Booking
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,jwt_required,get_jwt_identity
 from datetime import datetime
 
@@ -29,39 +29,10 @@ class ProtectedResource(Resource):
 #Auth
 class Signup(Resource):
     def post(self):
-        """Sign up a new driver
-        ---
-        parameters:
-          - name: body
-            in: body
-            required: true
-            schema:
-              type: object
-              properties:
-                firstname:
-                  type: string
-                lastname:
-                  type: string
-                license_number:
-                  type: string
-                experience_years:
-                  type: integer
-                phone_number:
-                  type: integer
-                email:
-                  type: string
-                password:
-                  type: string
-        responses:
-          201:
-            description: Driver registered successfully
-          400:
-            description: Error with missing fields or existing driver
-        """
         data = request.get_json()
 
         if not data:
-            return jsonify({"error": "No input data provided."}), 400
+            return ({"error": "No input data provided."}), 400
 
         required_fields = [
             "firstname",
@@ -75,7 +46,7 @@ class Signup(Resource):
         missing_fields = [field for field in required_fields if field not in data or not data[field]]
 
         if missing_fields:
-            return jsonify({
+            return ({
                 "error": f"Missing required fields: {', '.join(missing_fields)}"
             }), 400
 
@@ -88,7 +59,7 @@ class Signup(Resource):
         ).first()
 
         if existing_driver:
-            return jsonify({"error": "Driver already exists."}), 400
+            return ({"error": "Driver already exists."}), 400
 
         try:
             hashed_password = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
@@ -101,19 +72,21 @@ class Signup(Resource):
                 license_number=license_number,
                 experience_years=data["experience_years"],
             )
+            access_token = create_access_token(identity=new_driver.id)
             db.session.add(new_driver)
             db.session.commit()
+
+          
         except Exception as e:
             db.session.rollback()
-            return jsonify({"error": str(e)}), 400
+            return ({"error": str(e)}), 400
 
-        return jsonify({"success": "Driver registered successfully"}), 201
+        return ({"success": "Driver registered successfully","access_token":access_token}), 201
 
 
     
 class Login(Resource):
     def post(self):
-
         data = request.get_json()
 
         if not data:
@@ -136,9 +109,23 @@ class Login(Resource):
         if driver and bcrypt.check_password_hash(driver.password, data["password"]):
             access_token = create_access_token(identity=driver.id)
             refresh_token = create_refresh_token(identity=driver.id)
-            return {"access_token": access_token, "refresh_token": refresh_token, "driver":driver}, 200
+
+            # Serialize the driver object into a dictionary
+            driver_data = {
+                "id": driver.id,
+                "email": driver.email,
+                "license_number": driver.license_number,
+                # Add any other fields you need to return
+            }
+
+            return {
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "driver": driver_data
+            }, 200
         else:
             return {"error": "Invalid Driver login credentials"}, 401
+
 
 #Register Bus
 class RegisterBuses(Resource):

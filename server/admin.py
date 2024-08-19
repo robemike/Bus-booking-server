@@ -1,6 +1,6 @@
 from flask import Blueprint, request,make_response
 from flask_restful import Api, Resource
-from models import Admin, Driver, Customer, Bus, Schedule, db
+from .models import Admin, Driver, Customer, Bus, Schedule, db
 from flask_jwt_extended import create_access_token, jwt_required,create_refresh_token, get_jwt_identity
 from flask_bcrypt import Bcrypt
 
@@ -57,14 +57,28 @@ class AdminLogin(Resource):
         admin = Admin.query.filter_by(username=username).first()
         if admin:
             is_valid = bcrypt.check_password_hash(admin.password, password)
-            print(f"Password match: {is_valid}")  
+            print(f"Password match: {is_valid}")
 
-        if admin and is_valid:
-            access_token = create_access_token(identity=admin.id)
-            refresh_token = create_refresh_token(identity=admin.id)
-            return {"access_token": access_token, "refresh_token": refresh_token, "admin":admin}, 200
-        else:
-            return {"error": "Invalid Admin credentials"}, 401
+            if is_valid:
+                access_token = create_access_token(identity=admin.id)
+                refresh_token = create_refresh_token(identity=admin.id)
+                
+                # Serialize the admin object to avoid JSON serialization errors
+                admin_data = {
+                    "id": admin.id,
+                    "username": admin.username,
+                    # Add other necessary fields from the admin object
+                }
+
+                return {
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
+                    "admin": admin_data
+                }, 200
+
+        # If credentials are invalid
+        return {"error": "Invalid Admin credentials"}, 401
+
 
 class ViewDriverBuses(Resource):
     # @jwt_required()
