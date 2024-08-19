@@ -97,7 +97,7 @@ class Login(Resource):
         if user and bcrypt.check_password_hash(user.password, password):
             access_token = create_access_token(identity=user.id)
             refresh_token = create_refresh_token(identity=user.id)
-            return {"access_token": access_token, "refresh_token": refresh_token}, 200
+            return {"access_token": access_token, "refresh_token": refresh_token,"customer":user}, 200
         else:
             return {"error": "Invalid login credentials"}, 401
 

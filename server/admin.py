@@ -9,7 +9,6 @@ api = Api(admin_bp)
 bcrypt = Bcrypt()
 
 class AdminSignup(Resource):
-    @jwt_required()
     def post(self):
         data = request.get_json()
 
@@ -46,7 +45,6 @@ class AdminSignup(Resource):
         return {"success": "Admin registered successfully"}, 201
 
 class AdminLogin(Resource):
-    @jwt_required()
     def post(self):
         """Admin login"""
         data = request.get_json()
@@ -64,7 +62,7 @@ class AdminLogin(Resource):
         if admin and is_valid:
             access_token = create_access_token(identity=admin.id)
             refresh_token = create_refresh_token(identity=admin.id)
-            return {"access_token": access_token, "refresh_token": refresh_token}, 200
+            return {"access_token": access_token, "refresh_token": refresh_token, "admin":admin}, 200
         else:
             return {"error": "Invalid Admin credentials"}, 401
 

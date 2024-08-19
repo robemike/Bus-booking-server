@@ -28,7 +28,6 @@ class ProtectedResource(Resource):
 
 #Auth
 class Signup(Resource):
-    @jwt_required()
     def post(self):
         """Sign up a new driver
         ---
@@ -113,29 +112,8 @@ class Signup(Resource):
 
     
 class Login(Resource):
-    @jwt_required()
     def post(self):
-        """Driver login
-        ---
-        parameters:
-          - name: body
-            in: body
-            required: true
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                license_number:
-                  type: string
-                password:
-                  type: string
-        responses:
-          200:
-            description: Access and refresh tokens
-          401:
-            description: Invalid credentials
-        """
+
         data = request.get_json()
 
         if not data:
@@ -158,7 +136,7 @@ class Login(Resource):
         if driver and bcrypt.check_password_hash(driver.password, data["password"]):
             access_token = create_access_token(identity=driver.id)
             refresh_token = create_refresh_token(identity=driver.id)
-            return {"access_token": access_token, "refresh_token": refresh_token}, 200
+            return {"access_token": access_token, "refresh_token": refresh_token, "driver":driver}, 200
         else:
             return {"error": "Invalid Driver login credentials"}, 401
 
