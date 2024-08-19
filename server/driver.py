@@ -214,15 +214,20 @@ class RegisterBuses(Resource):
 
 class ViewBuses(Resource):
     def get(self):
-        """Retrieve all registered buses."""
         buses = Bus.query.all()
-        
-        if not buses:
-            return {"message": "No buses found."}, 404
-
+        bus_data = [{
+            'id': bus.id,
+            'username': bus.username,
+            'imageUrl': bus.image_url,
+            'number_of_seats': bus.number_of_seats,
+            'cost_per_seat': bus.cost_per_seat,
+            'route': bus.route,
+            'travel_time': bus.travel_time,
+            'number_plate': bus.number_plate,
+            'available_seats': bus.available_seats 
+        } for bus in buses]
+        return bus_data, 200
     
-        
-        return make_response([bus.to_dict() for bus in buses],200)
 class EditBuses(Resource):
     # @jwt_required()
     def patch(self, bus_id):
@@ -813,22 +818,22 @@ class DeleteSeatsByBus(Resource):
 
         return {"message": "Seats successfully deleted."}, 200
     
-class ViewAllBookings(Resource):
-    def get(self):
-        """Retrieve all bookings."""
-        try:
-            # Query all bookings
-            bookings = Booking.query.all()
+# class ViewAllBookings(Resource):
+#     def get(self):
+#         """Retrieve all bookings."""
+#         try:
+#             # Query all bookings
+#             bookings = Booking.query.all()
             
-            if not bookings:
-                return {"message": "No bookings found."}, 404
+#             if not bookings:
+#                 return {"message": "No bookings found."}, 404
 
-            # Serialize bookings
-            bookings_list = [booking.to_dict() for booking in bookings]
-            return (bookings_list)
+#             # Serialize bookings
+#             bookings_list = [booking.to_dict() for booking in bookings]
+#             return (bookings_list)
         
-        except Exception as e:
-            return {"error": str(e)}, 500
+#         except Exception as e:
+#             return {"error": str(e)}, 500
 
 
 # Register the resources with the API
@@ -836,7 +841,7 @@ driver_api.add_resource(Signup, "/signup")
 driver_api.add_resource(Login, "/login")
 driver_api.add_resource(ProtectedResource, "/protected")
 driver_api.add_resource(RegisterBuses, "/register/buses")
-driver_api.add_resource(ViewAllBookings, '/view_all_bookings')
+# driver_api.add_resource(ViewAllBookings, '/view_all_bookings')
 driver_api.add_resource(ViewBuses, "/buses")
 driver_api.add_resource(EditBuses, "/edit-buses/<int:bus_id>")
 driver_api.add_resource(ViewBusesByDriver, '/buses/driver/<int:driver_id>')

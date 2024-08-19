@@ -104,21 +104,11 @@ class Login(Resource):
     
 class ViewBookings(Resource):
     def get(self):
-        """Retrieve all bookings for the customer.
-        ---
-        responses:
-          200:
-            description: A list of bookings for the customer
-          404:
-            description: No bookings found
-        """
-        # Dynamically fetch the customer_id from the session
         customer_id = session.get('customer_id')
 
         if not customer_id:
             return {"message": "User not authenticated."}, 401
 
-        # Query the database for bookings associated with this customer
         bookings = Booking.query.filter_by(customer_id=customer_id).all()
 
         if not bookings:
@@ -169,29 +159,29 @@ class AddBookings(Resource):
             return {"error": "No input data provided."}, 400
         
         required_fields = [
-            "departure_time", #travel_time
-            "current_address",# from
+            "departure_time",  # travel_time
+            "current_address",  # from
             "number_of_seats",
-            "destination", #to
+            "destination",  # to
             "bus_id",
             "selected_seats",
-            
         ]
-        missing_fields = [field for field in required_fields if not data.get(field)]
-
-        if missing_fields:
-            return {
-                "error": f"Missing required fields: {', '.join(missing_fields)}"
-            }, 400
         
+        # Check for missing fields
+        missing_fields = [field for field in required_fields if field not in data or not data[field]]
+        if missing_fields:
+            return {"error": f"Missing required fields: {', '.join(missing_fields)}"}, 400
+        
+        # Get customer_id from JWT
         customer_id = get_jwt_identity()
 
+        # Extract data from the request
         departure_time_str = data.get('departure_time')
         destination = data.get('destination')
         number_of_seats = data.get('number_of_seats')
         current_address = data.get('current_address')
         bus_id = data.get('bus_id')  
-        selected_seats=data.get('selected_seats')
+        selected_seats = data.get('selected_seats')
 
         # Convert departure_time from string to a time object
         try:
@@ -199,17 +189,20 @@ class AddBookings(Resource):
         except ValueError:
             return {"error": "Invalid time format. Use HH:MM:SS."}, 400
 
+        # Check if the bus exists
         bus = Bus.query.get(bus_id)
         if not bus:
             return {"error": "Bus not found."}, 404
 
+        # Calculate total cost
         total_cost = bus.cost_per_seat * number_of_seats
 
+        # Create a new booking
         try:
             new_booking = Booking(
                 departure_time=departure_time,
                 destination=destination,
-                customer_id=customer_id,
+                customer_id=customer_id,  
                 number_of_seats=number_of_seats,
                 current_address=current_address,
                 bus_id=bus_id, 
@@ -222,7 +215,6 @@ class AddBookings(Resource):
         except Exception as e:
             db.session.rollback()
             return {"error": str(e)}, 500
-        
 class UpdateBooking(Resource):
     # @jwt_required()
     def put(self, booking_id):
