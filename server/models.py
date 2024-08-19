@@ -18,6 +18,7 @@ class Customer(db.Model, SerializerMixin):
     address = db.Column(db.String, nullable=False)
     phone_number = db.Column(db.String, nullable=False)
     id_or_passport = db.Column(db.String, unique=True, nullable=False)
+    role=db.Column(db.String,default='customer')
    
 
     bookings = db.relationship("Booking", back_populates="customer")
@@ -174,6 +175,7 @@ class Driver(db.Model, SerializerMixin):
     phone_number = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
+    role=db.Column(db.String,default='driver')
     
 
     buses = db.relationship("Bus", back_populates="driver",lazy='dynamic')
@@ -214,4 +216,5 @@ class Admin(db.Model, SerializerMixin):
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password= db.Column(db.String, nullable=False)
+    role=db.Column(db.String,default='admin')
   
