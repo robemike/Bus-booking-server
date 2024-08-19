@@ -1,7 +1,7 @@
 from flask import Blueprint, request,make_response,session
 from flask_bcrypt import Bcrypt
 from flask_restful import Api, Resource
-from .models import Customer, Booking, db,Bus,Schedule,Seat
+from models import Customer, Booking, db,Bus,Schedule,Seat
 from datetime import datetime
 from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required
 import logging
