@@ -1,4 +1,4 @@
-from .models import Customer, Booking,Bus,Seat,Driver,Schedule,Admin
+from models import Customer, Booking,Bus,Seat,Driver,Schedule,Admin
 from .config import app,request,jsonify,db
 from .driver import driver_bp
 from .customers import customer_bp
