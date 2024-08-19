@@ -1,18 +1,21 @@
-from flask import Blueprint, request,jsonify,make_response
-from flask_bcrypt import Bcrypt
+from .config import bcrypt,jwt,db,app
+from flask_jwt_extended import create_access_token,create_refresh_token,get_jwt_identity,jwt_required,current_user
+from .models import Driver,Bus,Schedule,Customer,Seat,Booking
+from flask import Blueprint, request,make_response
 from flask_restful import Api, Resource
-from .models import Driver, db,Bus,Schedule,Customer,Seat,Booking
-from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,jwt_required,get_jwt_identity
+
 from datetime import datetime
 
 
+
 driver_bp = Blueprint("driver_bp", __name__, url_prefix="/drivers")
-bcrypt = Bcrypt()
-jwt = JWTManager()
 driver_api = Api(driver_bp)
 
 
+
+
 class ProtectedResource(Resource):
+    # @jwt_required()
     def get(self):
         """Get protected resource
         ---
@@ -537,8 +540,7 @@ class EditScheduledBuses(Resource):
             return {"error": "Failed to update scheduled bus.", "details": str(e)}, 500
 
         
-class DeleteSchedule(Resource):
- # Protect this route if you want authentication
+class DeleteSchedule(Resource):  # Protect this route if you want authentication
     def delete(self, schedule_id):
         # Fetch the schedule by ID
         schedule = Schedule.query.get(schedule_id)
@@ -780,7 +782,7 @@ driver_api.add_resource(Login, "/login")
 driver_api.add_resource(ProtectedResource, "/protected")
 driver_api.add_resource(RegisterBuses, "/register/buses")
 # driver_api.add_resource(ViewAllBookings, '/view_all_bookings')
-driver_api.add_resource(ViewBuses, "/buses")
+driver_api.add_resource(ViewBuses, "drivers/buses")
 driver_api.add_resource(EditBuses, "/edit-buses/<int:bus_id>")
 driver_api.add_resource(ViewBusesByDriver, '/buses/driver/<int:driver_id>')
 driver_api.add_resource(ViewCustomers, '/customers')

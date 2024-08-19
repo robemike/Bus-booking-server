@@ -1,63 +1,20 @@
-import random
-from flask_jwt_extended import JWTManager,get_jwt,jwt_required
-from flask_cors import CORS
-from .customers import customer_bp,bcrypt as customer_bcrypt
-from .driver import driver_bp,bcrypt as driver_bcrypt
-from .admin import admin_bp,bcrypt as admin_bcrypt
-from .models import db,Bus,Customer,Booking,Seat
-from datetime import timedelta,date
-from flask import Flask,jsonify,request
-from flask_migrate import Migrate
-from flask_bcrypt import Bcrypt
-from datetime import date,time
-import os
-from dotenv import load_dotenv
-load_dotenv()
-from flask_swagger_ui import get_swaggerui_blueprint
-from flask_restful import Api
+from .models import Customer, Booking,Bus,Seat,Driver,Schedule,Admin
+from .config import app,request,jsonify,db
+from .driver import driver_bp
+from .customers import customer_bp
+from .admin import admin_bp
+
 import requests
 from requests.auth import HTTPBasicAuth
 from datetime import datetime
 import base64
 
 
-app = Flask(__name__)
-CORS(app)
 my_endpoint = "https://f0f2-41-80-112-198.ngrok-free.app"
 
-#Swagger
-SWAGGER_URL = '/swagger/'  
-API_URL = '/static/swagger.json' 
-
-
-# Call factory function to create our blueprint
-swaggerui_blueprint = get_swaggerui_blueprint(
-    SWAGGER_URL,  
-    API_URL,
-    config={  
-        'app_name': "Test application"
-    }
-)
-app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
-
-@app.route('/swagger/', strict_slashes=False)
-def swagger_view():
-    return app.send_static_file('swagger.json')
-
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URI')
-# app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///bus_booking.db'
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["JWT_SECRET_KEY"] = "fsbdgfnhgvjnvhmvh"+str(
-    random.randint(1,1000000000000))
-app.config["SECRET_KEY"] = "JKSRVHJVFBSRDFV"+str(random.randint(1,1000000000000))
-app.config["JWT_BLACKLIST_ENABLED"] = True
-app.config["JWT_BLACKLIST_TOKEN_CHECKS"] = ["access", "refresh"] 
-app.config['JWT_TOKEN_LOCATION']=['headers']
-app.json.compact = False
-jwt = JWTManager(app)
-driver_api = Api(driver_bp)
-bcrypt = Bcrypt(app)
-
+app.register_blueprint(driver_bp) 
+app.register_blueprint(customer_bp)
+app.register_blueprint(admin_bp)
 
 @app.route('/mpesa')
 def mpesa_home():
@@ -128,17 +85,17 @@ def getAccessToken():
 
 
 # Logout
-BLACKLIST = set()
-@jwt.token_in_blocklist_loader
-def check_if_token_in_blocklist(jwt_header, decrypted_token):
-    return decrypted_token['jti'] in BLACKLIST
+# BLACKLIST = set()
+# @jwt.token_in_blocklist_loader
+# def check_if_token_in_blocklist(jwt_header, decrypted_token):
+#     return decrypted_token['jti'] in BLACKLIST
 
-@app.route("/logout", methods=["POST"])
-@jwt_required(refresh=True)
-def logout():
-    jti = get_jwt()["jti"]
-    BLACKLIST.add(jti)
-    return jsonify({"success":"Successfully logged out"}), 200
+# @app.route("/logout", methods=["POST"])
+# @jwt_required(refresh=True)
+# def logout():
+#     jti = get_jwt()["jti"]
+#     BLACKLIST.add(jti)
+#     return jsonify({"success":"Successfully logged out"}), 200
 
 
 @app.errorhandler(Exception)
@@ -148,20 +105,6 @@ def handle_exception(e):
     }
     return jsonify(response), 500
 
-
-migrate = Migrate(app, db)
-db.init_app(app)
-customer_bcrypt.init_app(app)  
-driver_bcrypt.init_app(app)
-
-
-jwt = JWTManager(app)
-
-
-# Register blueprints
-app.register_blueprint(customer_bp)
-app.register_blueprint(driver_bp)  
-app.register_blueprint(admin_bp)
 
 
 #Routes
@@ -337,4 +280,5 @@ def get_bus_seats(bus_id):
 
 
 if __name__ == "__main__":
+    print(app.url_map)
     app.run(port=5555, debug=True)

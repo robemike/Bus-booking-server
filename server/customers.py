@@ -1,17 +1,22 @@
-from flask import Blueprint, request,make_response,session
-from flask_bcrypt import Bcrypt
-from flask_restful import Api, Resource
-from .models import Customer, Booking, db,Bus,Schedule,Seat
+from flask import request,make_response,session,Blueprint
+from flask_restful import Resource,Api
+from .models import Customer, Booking,Bus,Schedule,Seat
 from datetime import datetime
-from flask_jwt_extended import JWTManager,create_access_token,create_refresh_token,get_jwt_identity,jwt_required,current_user
+from .config import jwt,db,bcrypt
+from flask_jwt_extended import create_access_token,create_refresh_token,get_jwt_identity,jwt_required,current_user
 import logging
 
+
+
 customer_bp = Blueprint("customer_bp", __name__, url_prefix="/")
-bcrypt = Bcrypt()
-jwt = JWTManager()
 customer_api = Api(customer_bp)
 
 
+class ProtectedResource(Resource):
+    def get(self):
+        current_user = get_jwt_identity() 
+        return {"message": f"Hello, Customer {current_user}"}
+    
 @jwt.user_identity_loader
 def user_identity_lookup(user):
     return user
@@ -24,16 +29,12 @@ def user_lookup_callback(_jwt_header, jwt_data):
 
 
 class CheckSession(Resource):
+    @jwt_required()
     def get(self):
         return make_response(current_user.to_dict(), 200)
 
 
 customer_api.add_resource(CheckSession, "/check_session", endpoint="check_session")
-    
-class ProtectedResource(Resource):
-    def get(self):
-        current_user = get_jwt_identity() 
-        return {"message": f"Hello, Customer {current_user}"}
 
 class Signup(Resource):
     def post(self):
@@ -245,6 +246,7 @@ class AddBookings(Resource):
         except Exception as e:
             db.session.rollback()
             return {"error": str(e)}, 500
+        
 class UpdateBooking(Resource):
     def put(self, booking_id):
         """Update a booking by ID."""
@@ -350,4 +352,3 @@ customer_api.add_resource(ViewBookings, '/view_bookings/<int:customer_id>')
 customer_api.add_resource(UpdateBooking, '/update_bookings')
 customer_api.add_resource(DeleteBooking, '/delete_booking/<int:booking_id>')
 customer_api.add_resource(BookSeat, '/book-seats')
-

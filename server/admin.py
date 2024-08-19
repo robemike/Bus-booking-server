@@ -1,12 +1,13 @@
 from flask import Blueprint, request,make_response
 from flask_restful import Api, Resource
-from .models import Admin, Driver, Customer, Bus, Schedule, db
-from flask_jwt_extended import create_access_token, jwt_required,create_refresh_token, get_jwt_identity
-from flask_bcrypt import Bcrypt
+from .models import Admin, Driver, Customer, Bus, Schedule
+from .config import bcrypt,db
+from flask_jwt_extended import create_access_token,create_refresh_token,get_jwt_identity,jwt_required,current_user
+
+
 
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/admin')
 api = Api(admin_bp)
-bcrypt = Bcrypt()
 
 class AdminSignup(Resource):
     def post(self):
@@ -124,16 +125,16 @@ class AddDriver(Resource):
         db.session.commit()
         return {"message": "Driver added successfully."}, 201
 
-class DeleteDriver(Resource):
-    def delete(self, driver_id):
-        """Delete a driver"""
-        driver = Driver.query.get(driver_id)
-        if not driver:
-            return {"error": "Driver not found."}, 404
+# class DeleteDriver(Resource):
+#     def delete(self, driver_id):
+#         """Delete a driver"""
+#         driver = Driver.query.get(driver_id)
+#         if not driver:
+#             return {"error": "Driver not found."}, 404
 
-        db.session.delete(driver)
-        db.session.commit()
-        return {"message": "Driver deleted successfully."}, 200
+#         db.session.delete(driver)
+#         db.session.commit()
+#         return {"message": "Driver deleted successfully."}, 200
 
 class ViewCustomers(Resource):
     def get(self):
@@ -328,7 +329,7 @@ api.add_resource(ViewDrivers, '/view_drivers')
 api.add_resource(ViewDriversByID, '/drivers/<int:driver_id>', endpoint='view_driver_by_id')
 api.add_resource(ViewDriverBuses, '/driver/buses')
 api.add_resource(AddDriver, '/drivers')
-api.add_resource(DeleteDriver, '/drivers/<int:driver_id>')
+# api.add_resource(DeleteDriver, '/drivers/<int:driver_id>')
 api.add_resource(ViewCustomers, '/customers')
 api.add_resource(ViewBuses, '/buses')
 api.add_resource(ViewBusesByID, '/buses/<int:bus_id>', endpoint='view_buses_by_id')

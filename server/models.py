@@ -4,12 +4,11 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates, relationship
-
-db = SQLAlchemy()
+from config import db
 
 
 class Customer(db.Model, SerializerMixin):
-    __tablename__ = "customers"
+    _tablename_ = "customers"
     id = db.Column(db.Integer, primary_key=True)
     firstname = db.Column(db.String, nullable=False)
     lastname = db.Column(db.String, nullable=False)
@@ -47,7 +46,7 @@ class Customer(db.Model, SerializerMixin):
     
 
 class Bus(db.Model, SerializerMixin):
-    __tablename__ = "buses"
+    _tablename_ = "buses"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
     driver_id = db.Column(db.Integer, db.ForeignKey("drivers.id"))
@@ -77,7 +76,7 @@ class Bus(db.Model, SerializerMixin):
 
 
 class Schedule(db.Model, SerializerMixin):
-    __tablename__ = "schedules"
+    _tablename_ = "schedules"
     id = db.Column(db.Integer, primary_key=True)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     departure_time = db.Column(db.Time, nullable=False)
@@ -117,7 +116,7 @@ class Schedule(db.Model, SerializerMixin):
 
 
 class Booking(db.Model, SerializerMixin):
-    __tablename__ = "bookings"
+    _tablename_ = "bookings"
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
@@ -151,7 +150,7 @@ class Booking(db.Model, SerializerMixin):
 
     
 class Seat(db.Model,SerializerMixin):
-    __tablename__="seats"
+    _tablename_="seats"
 
     id = db.Column(db.Integer, primary_key=True)
     status=db.Column(db.String, default='available')
@@ -166,7 +165,7 @@ class Seat(db.Model,SerializerMixin):
 
 
 class Driver(db.Model, SerializerMixin):
-    __tablename__ = "drivers"
+    _tablename_ = "drivers"
     id = db.Column(db.Integer, primary_key=True)
     firstname = db.Column(db.String, nullable=False)
     lastname = db.Column(db.String, nullable=False)
@@ -211,10 +210,9 @@ class Driver(db.Model, SerializerMixin):
 
 
 class Admin(db.Model, SerializerMixin):
-    __tablename__ = "admins"
+    _tablename_ = "admins"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password= db.Column(db.String, nullable=False)
     role=db.Column(db.String,default='admin')
-  
