@@ -52,6 +52,7 @@ app.config["JWT_SECRET_KEY"] = "fsbdgfnhgvjnvhmvh"+str(
 app.config["SECRET_KEY"] = "JKSRVHJVFBSRDFV"+str(random.randint(1,1000000000000))
 app.config["JWT_BLACKLIST_ENABLED"] = True
 app.config["JWT_BLACKLIST_TOKEN_CHECKS"] = ["access", "refresh"] 
+app.config['JWT_TOKEN_LOCATION']=['headers']
 app.json.compact = False
 jwt = JWTManager(app)
 driver_api = Api(driver_bp)
@@ -236,47 +237,42 @@ def get_tickets():
             'departure_time': ticket.departure_time.strftime("%H:%M:%S"),  
         } for ticket in tickets]
 
-    return ticket_list, 200  #
-
-
+    return ticket_list, 200  
 
 
 @app.route('/tickets/<int:ticket_id>', methods=['GET'], endpoint='view_tickets_by_id')
 def get_ticket_by_id(ticket_id):
-  
-  
     ticket = Booking.query.get(ticket_id)
     
     if not ticket:
-        return ({"message": "No ticket found for this ID."}), 404
+        return ({"message": "No ticket found for this ID."}), 404  
     
     return ({
-
+        'status': 'success',  
+        'ticket': {
             'id': ticket.id,
             'booking_date': ticket.booking_date,
             'number_of_seats': ticket.number_of_seats,
-            'total_cost':ticket.total_cost,
-            'selected_seats':ticket.selected_seats,
-            'destination':ticket.destination,
-            'departure_time': ticket.departure_time, 
-    }), 200
+            'total_cost': ticket.total_cost,
+            'selected_seats': ticket.selected_seats,
+            'destination': ticket.destination,
+            'departure_time': ticket.departure_time,
+        }
+    }), 200 
 
- 
+
 @app.route('/tickets', methods=['POST'], endpoint='create_ticket')
 # @jwt_required()  
 def create_ticket():
     data = request.get_json() 
 
-    # Validate input data
     if not data:
-        return {"msg": "Missing input data"}, 400
+        return {"msg": "Missing input data"}, 400  
 
     required_fields = ['customer_id', 'bus_id', 'booking_date', 'number_of_seats', 'selected_seats', 'total_cost', 'destination', 'departure_time', 'current_address']
     for field in required_fields:
         if field not in data:
-            return {"msg": f"'{field}' is required"}, 400
-
-  
+            return {"msg": f"'{field}' is required"}, 400  
     new_ticket = Booking(
         customer_id=data['customer_id'],
         bus_id=data['bus_id'],
@@ -292,8 +288,8 @@ def create_ticket():
     db.session.add(new_ticket)
     db.session.commit()
 
-   
-    return {
+    return ({
+        'status': 'success',  
         'msg': 'Ticket created successfully',
         'ticket': {
             'id': new_ticket.id,
@@ -307,8 +303,7 @@ def create_ticket():
             'departure_time': new_ticket.departure_time.strftime("%H:%M:%S"), 
             'current_address': new_ticket.current_address  
         }
-    }, 201  
-
+    }), 201 
 @app.route('/buses/<int:bus_id>/seats')
 def get_bus_seats(bus_id):
     bus = Bus.query.get(bus_id)
