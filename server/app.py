@@ -221,50 +221,66 @@ def get_buses():
 #Tickets
 @app.route('/tickets', methods=['GET'], endpoint='view_tickets')
 def get_tickets():
-    tickets = Booking.query.all()
-    
+    try:
+        tickets = Booking.query.all()
+    except Exception as e:
+        app.logger.error(f"Error retrieving tickets: {e}")
+        return {"message": "Error retrieving tickets."}, 500
+
     if not tickets:
         return {"message": "No tickets found."}, 404
 
-    
-    ticket_list = [{
-            'id': ticket.id,
-            'booking_date': ticket.booking_date.isoformat(), 
-            'number_of_seats': ticket.number_of_seats,
-            'selected_seats': ticket.selected_seats,
-            'total_cost': ticket.total_cost,
-            'destination': ticket.destination,
-            'departure_time': ticket.departure_time.strftime("%H:%M:%S"),  
-        } for ticket in tickets]
+    ticket_list = []
+    for ticket in tickets:
+        try:
+            ticket_list.append({
+                'id': ticket.id,
+                'booking_date': ticket.booking_date.isoformat(), 
+                'number_of_seats': ticket.number_of_seats,
+                'selected_seats': ticket.selected_seats,
+                'total_cost': ticket.total_cost,
+                'destination': ticket.destination,
+                'departure_time': ticket.departure_time.strftime("%H:%M:%S"),  
+            })
+        except Exception as e:
+            app.logger.error(f"Error formatting ticket data: {e}")
 
     return ticket_list, 200  
 
 
 @app.route('/tickets/<int:ticket_id>', methods=['GET'], endpoint='view_tickets_by_id')
 def get_ticket_by_id(ticket_id):
-    ticket = Booking.query.get(ticket_id)
-    
+    try:
+        ticket = Booking.query.get(ticket_id)
+    except Exception as e:
+        app.logger.error(f"Error retrieving ticket by ID: {e}")
+        return {"message": "Error retrieving ticket."}, 500
+        
     if not ticket:
-        return ({"message": "No ticket found for this ID."}), 404  
+        return {"message": "No ticket found for this ID."}, 404  
     
-    return ({
+    return {
         'status': 'success',  
         'ticket': {
             'id': ticket.id,
-            'booking_date': ticket.booking_date,
+            'booking_date': ticket.booking_date.isoformat(),
             'number_of_seats': ticket.number_of_seats,
             'total_cost': ticket.total_cost,
             'selected_seats': ticket.selected_seats,
             'destination': ticket.destination,
-            'departure_time': ticket.departure_time,
+            'departure_time': ticket.departure_time.strftime("%H:%M:%S"),
         }
-    }), 200 
+    }, 200 
 
 
 @app.route('/tickets', methods=['POST'], endpoint='create_ticket')
 # @jwt_required()  
 def create_ticket():
-    data = request.get_json() 
+    try:
+        data = request.get_json() 
+    except Exception as e:
+        app.logger.error(f"Error parsing request data: {e}")
+        return {"msg": "Error parsing input data"}, 400
 
     if not data:
         return {"msg": "Missing input data"}, 400  
@@ -273,6 +289,7 @@ def create_ticket():
     for field in required_fields:
         if field not in data:
             return {"msg": f"'{field}' is required"}, 400  
+
     new_ticket = Booking(
         customer_id=data['customer_id'],
         bus_id=data['bus_id'],
@@ -284,11 +301,16 @@ def create_ticket():
         departure_time=data['departure_time'],  
         current_address=data['current_address']  
     )
-   
-    db.session.add(new_ticket)
-    db.session.commit()
 
-    return ({
+    try:
+        db.session.add(new_ticket)
+        db.session.commit()
+    except Exception as e:
+        app.logger.error(f"Error creating ticket: {e}")
+        db.session.rollback()
+        return {"msg": "Error creating ticket"}, 500
+
+    return {
         'status': 'success',  
         'msg': 'Ticket created successfully',
         'ticket': {
@@ -303,7 +325,7 @@ def create_ticket():
             'departure_time': new_ticket.departure_time.strftime("%H:%M:%S"), 
             'current_address': new_ticket.current_address  
         }
-    }), 201 
+    }, 201
 @app.route('/buses/<int:bus_id>/seats')
 def get_bus_seats(bus_id):
     bus = Bus.query.get(bus_id)
