@@ -59,33 +59,38 @@ class AdminLogin(Resource):
     def post(self):
         """Admin login"""
         data = request.get_json()
-        email = data.get('email') 
+        email = data.get('email')  # Changed from 'username' to 'email'
         password = data.get('password')
 
         if not email or not password:
             return {"error": "Email and password are required."}, 400
 
-        admin = Admin.query.filter_by(email=email).first() 
+        admin = Admin.query.filter_by(email=email).first()
         if admin:
+            print(f"Admin found: {admin.email}")  
+
             is_valid = bcrypt.check_password_hash(admin.password, password)
-            
-            print(f"Password match: {is_valid}")
+            print(f"Password match: {is_valid}")  
 
             if is_valid:
                 access_token = create_access_token(identity=admin.id, additional_claims={"role": admin.role})
                 refresh_token = create_refresh_token(identity=admin.id, additional_claims={"role": admin.role})
-                
+
                 admin_data = {
                     "id": admin.id,
                     "email": admin.email, 
-                    "role": admin.role      
+                    "role": admin.role     
                 }
 
                 return {
                     "access_token": access_token,
                     "refresh_token": refresh_token,
-                    "admin": admin_data 
+                    "admin": admin_data  
                 }, 200
+            else:
+                print("Invalid password")
+        else:
+            print(f"No admin found with email: {email}") 
 
         return {"error": "Invalid Admin credentials"}, 401
 
