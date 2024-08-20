@@ -28,6 +28,18 @@ class ProtectedResource(Resource):
         current_user = get_jwt_identity()  
         return {"message": f"Hello, Driver, your ID is {current_user}"}
 
+
+   
+
+
+
+class CheckSession(Resource):
+    @jwt_required()
+    def get(self):
+        return make_response(current_user.to_dict(), 200)
+
+
+driver_api.add_resource(CheckSession, "/check_session", endpoint="check_session")
 #Auth
 class Signup(Resource):
     def post(self):
@@ -74,16 +86,21 @@ class Signup(Resource):
                 license_number=license_number,
                 experience_years=data["experience_years"],
             )
-            access_token = create_access_token(identity=new_driver.id)
+            
             db.session.add(new_driver)
             db.session.commit()
+            print(new_driver.id)
+            print(new_driver.email)
+           
+            access_token = create_access_token(identity=new_driver.id, additional_claims={"role": new_driver.role})
+          
 
           
         except Exception as e:
             db.session.rollback()
             return ({"error": str(e)}), 400
 
-        return ({"success": "Driver registered successfully","access_token":access_token}), 201
+        return make_response({"success": "Driver registered successfully","access_token":access_token,"new_driver":new_driver.to_dict()},201)
 
 
     
@@ -123,7 +140,7 @@ class Login(Resource):
             return {
                 "access_token": access_token,
                 "refresh_token": refresh_token,
-                "driver": driver_data
+                "driver": driver.to_dict()
             }, 200
         else:
             return {"error": "Invalid Driver login credentials"}, 401
@@ -782,7 +799,7 @@ driver_api.add_resource(Login, "/login")
 driver_api.add_resource(ProtectedResource, "/protected")
 driver_api.add_resource(RegisterBuses, "/register/buses")
 # driver_api.add_resource(ViewAllBookings, '/view_all_bookings')
-driver_api.add_resource(ViewBuses, "drivers/buses")
+driver_api.add_resource(ViewBuses, "/drivers/buses")
 driver_api.add_resource(EditBuses, "/edit-buses/<int:bus_id>")
 driver_api.add_resource(ViewBusesByDriver, '/buses/driver/<int:driver_id>')
 driver_api.add_resource(ViewCustomers, '/customers')
