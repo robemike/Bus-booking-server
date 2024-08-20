@@ -134,11 +134,12 @@ class Login(Resource):
 
     
 class ViewBookings(Resource):
-    def get(self):
-        customer_id = session.get('customer_id')
+    def get(self, customer_id):
+        # Assuming `customer_id` is now passed as a path parameter
 
+        # Validate the customer_id if necessary
         if not customer_id:
-            return {"message": "User not authenticated."}, 401
+            return {"message": "Customer ID is required."}, 400
 
         bookings = Booking.query.filter_by(customer_id=customer_id).all()
 
@@ -151,19 +152,18 @@ class ViewBookings(Resource):
         if not customer:
             return {"message": "Customer not found."}, 404
 
-        # Return the list of bookings along with the customer's phone number
-        return make_response(
+        # Manually construct the response data
+        bookings_data = [
             {
-                "bookings": [
-                    {
-                        **booking.to_dict(),
-                        'phone_number': customer.phone_number
-                    }
-                    for booking in bookings
-                ]
-            },
-            200
-        )
+                **booking.to_dict(),  # Assuming to_dict() doesn't take any arguments
+                'phone_number': customer.phone_number
+            }
+            for booking in bookings
+        ]
+
+        # Return the list of bookings along with the customer's phone number
+        return make_response({"bookings": bookings_data}, 200)
+    
 class ViewAllBookings(Resource):
     def get(self):
         """Retrieve all bookings."""
@@ -349,6 +349,7 @@ customer_api.add_resource(Login, "/login")
 customer_api.add_resource(ProtectedResource, "/protected")
 customer_api.add_resource(AddBookings, "/bookings",)
 customer_api.add_resource(ViewBookings, '/view_bookings/<int:customer_id>')
+customer_api.add_resource(ViewAllBookings, '/view_bookings')
 customer_api.add_resource(UpdateBooking, '/update_bookings')
 customer_api.add_resource(DeleteBooking, '/delete_booking/<int:booking_id>')
 customer_api.add_resource(BookSeat, '/book-seats')
