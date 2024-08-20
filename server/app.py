@@ -85,19 +85,6 @@ def getAccessToken():
     return data['access_token']
 
 
-# Logout
-# BLACKLIST = set()
-# @jwt.token_in_blocklist_loader
-# def check_if_token_in_blocklist(jwt_header, decrypted_token):
-#     return decrypted_token['jti'] in BLACKLIST
-
-# @app.route("/logout", methods=["POST"])
-# @jwt_required(refresh=True)
-# def logout():
-#     jti = get_jwt()["jti"]
-#     BLACKLIST.add(jti)
-#     return jsonify({"success":"Successfully logged out"}), 200
-
 
 @app.errorhandler(Exception)
 def handle_exception(e):
@@ -218,7 +205,6 @@ def get_ticket_by_id(ticket_id):
 
 
 @app.route('/tickets', methods=['POST'], endpoint='create_ticket')
-# @jwt_required()  
 def create_ticket():
     try:
         data = request.get_json() 

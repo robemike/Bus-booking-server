@@ -25,7 +25,7 @@ def user_identity_lookup(user):
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
     identity = jwt_data["sub"]
-    role = jwt_data.get("role")  # Extract the role from the JWT claims
+    role = jwt_data.get("role")
 
     if role:
         if role == 'customer':
@@ -128,12 +128,12 @@ class Login(Resource):
             access_token = create_access_token(identity=user.id, additional_claims={"role": user.role})
             refresh_token = create_refresh_token(identity=user.id,additional_claims={"role": user.role} )
             
-            # Serialize the Customer object into a dictionary
+           
             customer_data = {
                 "id": user.id,
                 "email": user.email,
                 "firstname": user.firstname,
-                # Add any other relevant fields
+               
             }
 
             return {
@@ -147,9 +147,6 @@ class Login(Resource):
     
 class ViewBookings(Resource):
     def get(self, customer_id):
-        # Assuming `customer_id` is now passed as a path parameter
-
-        # Validate the customer_id if necessary
         if not customer_id:
             return {"message": "Customer ID is required."}, 400
 
@@ -158,35 +155,30 @@ class ViewBookings(Resource):
         if not bookings:
             return {"message": "No bookings found."}, 404
 
-        # Retrieve the customer object associated with the bookings
         customer = Customer.query.get(customer_id)
         
         if not customer:
             return {"message": "Customer not found."}, 404
 
-        # Manually construct the response data
         bookings_data = [
             {
-                **booking.to_dict(),  # Assuming to_dict() doesn't take any arguments
+                **booking.to_dict(),  
                 'phone_number': customer.phone_number
             }
             for booking in bookings
         ]
 
-        # Return the list of bookings along with the customer's phone number
         return make_response({"bookings": bookings_data}, 200)
     
 class ViewAllBookings(Resource):
     def get(self):
         """Retrieve all bookings."""
         try:
-            # Query all bookings
             bookings = Booking.query.all()
             
             if not bookings:
                 return {"message": "No bookings found."}, 404
 
-            # Serialize bookings
             bookings_list = [booking.to_dict() for booking in bookings]
             return (bookings_list)
         
@@ -210,15 +202,15 @@ class AddBookings(Resource):
             "selected_seats",
         ]
         
-        # Check for missing fields
+       
         missing_fields = [field for field in required_fields if field not in data or not data[field]]
         if missing_fields:
             return {"error": f"Missing required fields: {', '.join(missing_fields)}"}, 400
         
-        # Get customer_id from JWT
+      
         customer_id = get_jwt_identity()
 
-        # Extract data from the request
+       
         departure_time_str = data.get('departure_time')
         destination = data.get('destination')
         number_of_seats = data.get('number_of_seats')
@@ -226,21 +218,17 @@ class AddBookings(Resource):
         bus_id = data.get('bus_id')  
         selected_seats = data.get('selected_seats')
 
-        # Convert departure_time from string to a time object
         try:
             departure_time = datetime.strptime(departure_time_str, "%H:%M:%S").time()
         except ValueError:
             return {"error": "Invalid time format. Use HH:MM:SS."}, 400
 
-        # Check if the bus exists
         bus = Bus.query.get(bus_id)
         if not bus:
             return {"error": "Bus not found."}, 404
 
-        # Calculate total cost
         total_cost = bus.cost_per_seat * number_of_seats
 
-        # Create a new booking
         try:
             new_booking = Booking(
                 departure_time=departure_time,
@@ -264,7 +252,6 @@ class UpdateBooking(Resource):
         """Update a booking by ID."""
         data = request.get_json()
         bus_id = data.get('bus_id') 
-        # Validate bus_id
         if bus_id is None:
             return {"message": "bus_id is required."}, 400
 
@@ -293,13 +280,11 @@ class DeleteBooking(Resource):
           404:
             description: Booking not found
         """
-        # Query the database for the booking associated with the provided ID
         booking = Booking.query.get(booking_id)
 
         if not booking:
             return {"message": "Booking not found."}, 404
 
-        # Delete the booking
         db.session.delete(booking)
         db.session.commit()
 
@@ -320,29 +305,23 @@ class BookSeat(Resource):
         if not schedule:
             return {'error': 'Schedule not found'}, 404
         
-        # Check the number of seats available
         available_seats = schedule.available_seats
         number_of_seats_to_book = len(selected_seats)
 
-        # if number_of_seats_to_book > available_seats:
-        #     return {'error': 'Not enough seats available'}, 400
-
-        # Update the occupied seats and available seats
+     
         schedule.occupied_seats += number_of_seats_to_book
         schedule.available_seats -= number_of_seats_to_book
 
-        # Ensure available_seats does not go below zero
         if schedule.available_seats < 0:
             schedule.available_seats = 0
 
-        # Update seat statuses
+     
         for seat_number in selected_seats:
             seat = Seat.query.filter_by(bus_id=bus_id, seat_number=seat_number).first()
             if seat:
-                if seat.status == 'available':  # Check if seat is available before booking
+                if seat.status == 'available':  
                     seat.status = 'booked'
                 else:
-                    # If any seat is already booked, rollback and return an error
                     db.session.rollback()
                     return {'error': f'Seat {seat_number} is already booked'}, 400
 
@@ -357,7 +336,6 @@ class BookSeat(Resource):
 
 customer_api.add_resource(Signup, "/signup")
 customer_api.add_resource(Login, "/login")
-# customer_api.add_resource(RefreshToken, "/refresh")
 customer_api.add_resource(ProtectedResource, "/protected")
 customer_api.add_resource(AddBookings, "/bookings",)
 customer_api.add_resource(ViewBookings, '/view_bookings/<int:customer_id>')

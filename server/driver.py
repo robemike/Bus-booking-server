@@ -15,7 +15,6 @@ driver_api = Api(driver_bp)
 
 
 class ProtectedResource(Resource):
-    # @jwt_required()
     def get(self):
         """Get protected resource
         ---
@@ -129,12 +128,10 @@ class Login(Resource):
             access_token = create_access_token(identity=driver.id)
             refresh_token = create_refresh_token(identity=driver.id)
 
-            # Serialize the driver object into a dictionary
             driver_data = {
                 "id": driver.id,
                 "email": driver.email,
                 "license_number": driver.license_number,
-                # Add any other fields you need to return
             }
 
             return {
@@ -211,7 +208,7 @@ class EditBuses(Resource):
         if not bus:
             return {"error": "Bus not found."}, 404
 
-        # Define required fields
+
         required_fields = ["username","cost_per_seat", "number_of_seats", "route", "travel_time", "number_plate", "image"]
         missing_fields = [field for field in required_fields if field not in data]
 
@@ -221,7 +218,6 @@ class EditBuses(Resource):
             }, 400
 
         try:
-            # Update the fields if they are provided in the request
             if 'username' in data:
                 bus.username = data['username']
             if 'cost_per_seat' in data:
@@ -388,13 +384,11 @@ class ViewScheduledBusByID(Resource):
           404:
             description: Scheduled bus not found
         """
-        # Query the database for the scheduled bus with the given ID
         scheduled_bus = Schedule.query.filter_by(bus_id=bus_id).first()
 
         if not scheduled_bus:
             return {"message": "Scheduled bus not found."}, 404
 
-        # Prepare the data for the response
         data = {
             "id": scheduled_bus.id,
             'bus_id': scheduled_bus.bus_id,
@@ -453,7 +447,6 @@ class ScheduledBuses(Resource):
         if missing_fields:
             return {"error": f"Missing required fields: {', '.join(missing_fields)}"}, 400
 
-        # Parse input values
         try:
             departure_datetime = datetime.strptime(data.get('departure_time'), "%H:%M:%S")
             arrival_datetime = datetime.strptime(data.get('arrival_time'), "%H:%M:%S")
@@ -524,7 +517,6 @@ class EditScheduledBuses(Resource):
         if not schedule:
             return {"error": "Scheduled bus not found."}, 404
 
-        # Define required fields
         required_fields = ['bus_id', 'departure_time', 'arrival_time', 'travel_date', 'available_seats', 'occupied_seats']
         missing_fields = [field for field in required_fields if field not in data]
 
@@ -534,7 +526,6 @@ class EditScheduledBuses(Resource):
             }, 400
 
         try:
-            # Update the fields if they are provided in the request
             if 'bus_id' in data:
                 schedule.bus_id = data['bus_id']
             if 'departure_time' in data:
@@ -557,15 +548,13 @@ class EditScheduledBuses(Resource):
             return {"error": "Failed to update scheduled bus.", "details": str(e)}, 500
 
         
-class DeleteSchedule(Resource):  # Protect this route if you want authentication
+class DeleteSchedule(Resource):  
     def delete(self, schedule_id):
-        # Fetch the schedule by ID
         schedule = Schedule.query.get(schedule_id)
 
         if not schedule:
             return ({"msg": "Schedule not found"}), 404
 
-        # Delete the schedule
         db.session.delete(schedule)
         db.session.commit()
 
@@ -604,7 +593,6 @@ class ViewCustomerById(Resource):
         
         return make_response({"customer": customer_data}, 200)
 
-#Bus Cost per Seat
 
 class ViewBusCost(Resource):
     def get(self, bus_id):
@@ -659,7 +647,6 @@ class AddBusCostByID(Resource):
         """
         current_driver_id = get_jwt_identity()
 
-        # Check if the bus exists for the current driver
         bus = Bus.query.filter_by(id=bus_id, driver_id=current_driver_id).first()
         if not bus:
             return {"error": "Bus not found."}, 404
@@ -670,7 +657,7 @@ class AddBusCostByID(Resource):
             return {"error": "Missing required field: cost_per_seat"}, 400
 
         try:
-            bus.cost_per_seat = float(data['cost_per_seat'])  # Update cost per seat
+            bus.cost_per_seat = float(data['cost_per_seat']) 
             db.session.commit()
             return {"message": "Cost per seat created successfully.", "bus_id": bus.id}, 201
         except ValueError as ve:
@@ -715,7 +702,7 @@ class UpdateBusCostByID(Resource):
             return {"error": "Missing required field: cost_per_seat"}, 400
 
         try:
-            bus.cost_per_seat = float(data['cost_per_seat'])  # Update cost per seat
+            bus.cost_per_seat = float(data['cost_per_seat']) 
             db.session.commit()
             return {"message": "Cost per seat updated successfully."}, 200
         except ValueError as ve:
@@ -728,18 +715,18 @@ class UpdateSeat(Resource):
     def put(self, seat_id):
         """Update a seat by ID."""
         data = request.get_json()
-        bus_id = data.get('bus_id')  # Get bus_id from the request body
+        bus_id = data.get('bus_id')  
 
         # Validate bus_id
         if bus_id is None:
             return {"message": "bus_id is required."}, 400
 
-        seat = Seat.query.get(seat_id)  # Retrieve the seat using seat_id from the route
+        seat = Seat.query.get(seat_id) 
         if not seat:
             return {"message": "Seat not found."}, 404
 
-        seat.bus_id = bus_id  # Update the bus_id
-        # Update other fields if necessary
+        seat.bus_id = bus_id 
+        
         db.session.commit()
 
         return {"message": "Seat updated successfully."}, 200
@@ -761,13 +748,11 @@ class DeleteSeatsByBus(Resource):
           404:
             description: No seats found for the given bus ID
         """
-        # Query the database for seats associated with the provided bus_id
         seats = Seat.query.filter_by(bus_id=bus_id).all()
 
         if not seats:
             return {"message": "No seats found for the given bus ID."}, 404
 
-        # Delete all seats
         for seat in seats:
             db.session.delete(seat)
         
@@ -811,7 +796,6 @@ driver_api.add_resource(ViewScheduledBusByID, "/view_scheduled_buses/<int:bus_id
 driver_api.add_resource(ScheduledBuses, "/schedule_buses")
 driver_api.add_resource(EditScheduledBuses, "/edit-scheduled_buses/<int:schedule_id>")
 driver_api.add_resource(DeleteSchedule, "/delete_scheduled_buses/<int:schedule_id>")
-# driver_api.add_resource(UpdateSeat, "/update_seat")
 driver_api.add_resource(DeleteSeatsByBus, '/seats/<int:bus_id>')
 driver_api.add_resource(ViewBusCost, '/buses/<int:bus_id>/cost', endpoint='get_bus_cost')
 driver_api.add_resource(AddBusCostByID, '/buses/<int:bus_id>/cost', endpoint='add_bus_cost_by_id')

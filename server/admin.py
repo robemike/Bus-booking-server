@@ -36,7 +36,6 @@ class AdminSignup(Resource):
 
         email = data["email"]
 
-        # Check if an admin already exists
         if Admin.query.first():
             return {"error": "An admin already exists."}, 400
 
@@ -76,11 +75,9 @@ class AdminLogin(Resource):
                 access_token = create_access_token(identity=admin.id, additional_claims={"role": admin.role})
                 refresh_token = create_refresh_token(identity=admin.id,additional_claims={"role": admin.role})
                 
-                # Serialize the admin object to avoid JSON serialization errors
                 admin_data = {
                     "id": admin.id,
                     "username": admin.username,
-                    # Add other necessary fields from the admin object
                 }
 
                 return {
@@ -89,7 +86,7 @@ class AdminLogin(Resource):
                     "admin": admin.to_dict()
                 }, 200
 
-        # If credentials are invalid
+
         return {"error": "Invalid Admin credentials"}, 401
 
 
@@ -169,7 +166,6 @@ class ViewScheduledBuses(Resource):
         try:
             scheduled_buses = Schedule.query.all()
             
-            # Log the number of scheduled buses found
             print(f"Number of scheduled buses found: {len(scheduled_buses)}")
             
            
@@ -235,14 +231,13 @@ class ViewDriversByID(Resource):
           403:
             description: User is not an admin
         """
-        current_user_id = get_jwt_identity()  # Get the current user's identity
+        current_user_id = get_jwt_identity()  
 
-        # Check if the current user is an admin
         admin_user = Admin.query.get(current_user_id) 
         if not admin_user:
             return {"error": "User is not an admin"}, 403
 
-        driver = Driver.query.get(driver_id)  # Retrieve the driver by ID
+        driver = Driver.query.get(driver_id)  
         if not driver:
             return {"message": "Driver not found."}, 404
 
@@ -270,17 +265,6 @@ class ViewBuses(Resource):
         if not buses:
             return {"message": "No buses found."}, 404
 
-        # return [{
-        #     'id': bus.id,
-        #     'username': bus.username,
-        #     'cost_per_seat': bus.cost_per_seat,
-        #     'number_of_seats': bus.number_of_seats,
-        #     'route': bus.route,
-        #     'travel_time': bus.travel_time.isoformat(), 
-        #     'number_plate': bus.number_plate,
-        #     'image':bus.image,
-        #     'seats':bus.seats
-        # } for bus in buses], 200
         return make_response([bus.to_dict() for bus in buses],200)
     
 
