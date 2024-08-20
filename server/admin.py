@@ -9,6 +9,16 @@ from flask_jwt_extended import create_access_token,create_refresh_token,get_jwt_
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/admin')
 api = Api(admin_bp)
 
+
+class CheckSession(Resource):
+    @jwt_required()
+    def get(self):
+        return make_response(current_user.to_dict(), 200)
+
+
+api.add_resource(CheckSession, "/check_session", endpoint="check_session")
+
+
 class AdminSignup(Resource):
     def post(self):
         data = request.get_json()
@@ -39,11 +49,12 @@ class AdminSignup(Resource):
             )
             db.session.add(new_admin)
             db.session.commit()
+            access_token = create_access_token(identity=new_admin.id, additional_claims={"role": new_admin.role})
         except Exception as e:
             db.session.rollback()
             return {"error": str(e)}, 500
 
-        return {"success": "Admin registered successfully"}, 201
+        return {"success": "Admin registered successfully","access_token":access_token, "new_admin":new_admin.to_dict()}, 201
 
 class AdminLogin(Resource):
     def post(self):
@@ -58,11 +69,12 @@ class AdminLogin(Resource):
         admin = Admin.query.filter_by(username=username).first()
         if admin:
             is_valid = bcrypt.check_password_hash(admin.password, password)
+            
             print(f"Password match: {is_valid}")
 
             if is_valid:
-                access_token = create_access_token(identity=admin.id)
-                refresh_token = create_refresh_token(identity=admin.id)
+                access_token = create_access_token(identity=admin.id, additional_claims={"role": admin.role})
+                refresh_token = create_refresh_token(identity=admin.id,additional_claims={"role": admin.role})
                 
                 # Serialize the admin object to avoid JSON serialization errors
                 admin_data = {
@@ -74,7 +86,7 @@ class AdminLogin(Resource):
                 return {
                     "access_token": access_token,
                     "refresh_token": refresh_token,
-                    "admin": admin_data
+                    "admin": admin.to_dict()
                 }, 200
 
         # If credentials are invalid

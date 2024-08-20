@@ -8,7 +8,7 @@ from .config import db
 
 
 class Customer(db.Model, SerializerMixin):
-    _tablename_ = "customers"
+    __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True)
     firstname = db.Column(db.String, nullable=False)
     lastname = db.Column(db.String, nullable=False)
@@ -46,7 +46,7 @@ class Customer(db.Model, SerializerMixin):
     
 
 class Bus(db.Model, SerializerMixin):
-    _tablename_ = "buses"
+    __tablename__ = "buses"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
     driver_id = db.Column(db.Integer, db.ForeignKey("drivers.id"))
@@ -76,7 +76,7 @@ class Bus(db.Model, SerializerMixin):
 
 
 class Schedule(db.Model, SerializerMixin):
-    _tablename_ = "schedules"
+    __tablename__ = "schedules"
     id = db.Column(db.Integer, primary_key=True)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
     departure_time = db.Column(db.Time, nullable=False)
@@ -116,7 +116,7 @@ class Schedule(db.Model, SerializerMixin):
 
 
 class Booking(db.Model, SerializerMixin):
-    _tablename_ = "bookings"
+    __tablename__ = "bookings"
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.id"), nullable=False)
@@ -150,7 +150,7 @@ class Booking(db.Model, SerializerMixin):
 
     
 class Seat(db.Model,SerializerMixin):
-    _tablename_="seats"
+    __tablename__="seats"
 
     id = db.Column(db.Integer, primary_key=True)
     status=db.Column(db.String, default='available')
@@ -165,7 +165,7 @@ class Seat(db.Model,SerializerMixin):
 
 
 class Driver(db.Model, SerializerMixin):
-    _tablename_ = "drivers"
+    __tablename__ = "drivers"
     id = db.Column(db.Integer, primary_key=True)
     firstname = db.Column(db.String, nullable=False)
     lastname = db.Column(db.String, nullable=False)
@@ -210,9 +210,10 @@ class Driver(db.Model, SerializerMixin):
 
 
 class Admin(db.Model, SerializerMixin):
-    _tablename_ = "admins"
+    __tablename__ = "admins"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password= db.Column(db.String, nullable=False)
     role=db.Column(db.String,default='admin')
+  
