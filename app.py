@@ -72,7 +72,6 @@ def MpesaExpress():
 @app.route('/lnmo-callback', methods=['POST'])
 def incoming():
     data = request.get_json()
-    print(data)
     return "ok"
 
 def getAccessToken():
@@ -266,5 +265,4 @@ def get_bus_seats(bus_id):
 
 
 if __name__ == "__main__":
-    print(app.url_map)
     app.run(port=5555, debug=True)
