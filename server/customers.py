@@ -1,8 +1,8 @@
 from flask import request,make_response,session,Blueprint
 from flask_restful import Resource,Api
-from .models import Customer, Booking,Bus,Schedule,Seat,Admin,Driver
+from models import Customer, Booking,Bus,Schedule,Seat,Admin,Driver
 from datetime import datetime
-from .config import jwt,db,bcrypt
+from config import jwt,db,bcrypt
 from flask_jwt_extended import create_access_token,create_refresh_token,get_jwt_identity,jwt_required,current_user
 import logging
 

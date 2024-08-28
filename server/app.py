@@ -1,8 +1,8 @@
-from .models import Customer, Booking,Bus,Seat,Driver,Schedule,Admin
-from .config import app,request,jsonify,db
-from .driver import driver_bp
-from .customers import customer_bp
-from .admin import admin_bp
+from models import Customer, Booking,Bus,Seat,Driver,Schedule,Admin
+from config import app,request,jsonify,db
+from driver import driver_bp
+from customers import customer_bp
+from admin import admin_bp
 
 import requests
 from requests.auth import HTTPBasicAuth

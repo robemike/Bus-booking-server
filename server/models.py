@@ -2,7 +2,7 @@ from datetime import datetime, date
 from sqlalchemy_serializer import SerializerMixin
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates, relationship
-from .config import db
+from config import db
 
 class Customer(db.Model, SerializerMixin):
     __tablename__ = "customers"

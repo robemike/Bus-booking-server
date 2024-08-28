@@ -1,7 +1,7 @@
 from flask import Blueprint, request,make_response
 from flask_restful import Api, Resource
-from .models import Admin, Driver, Customer, Bus, Schedule
-from .config import bcrypt,db
+from models import Admin, Driver, Customer, Bus, Schedule
+from config import bcrypt,db
 from flask_jwt_extended import create_access_token,create_refresh_token,get_jwt_identity,jwt_required,current_user
 
 

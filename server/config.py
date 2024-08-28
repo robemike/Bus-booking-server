@@ -33,11 +33,6 @@ db.init_app(app)
 
 
 
-
-
-
-
-
 #Swagger
 SWAGGER_URL = '/swagger/'  
 API_URL = '/static/swagger.json' 

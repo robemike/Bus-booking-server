@@ -1,17 +1,12 @@
-from .config import bcrypt,jwt,db,app
+from config import bcrypt,jwt,db,app
 from flask_jwt_extended import create_access_token,create_refresh_token,get_jwt_identity,jwt_required,current_user
-from .models import Driver,Bus,Schedule,Customer,Seat,Booking
+from models import Driver,Bus,Schedule,Customer,Seat,Booking
 from flask import Blueprint, request,make_response
 from flask_restful import Api, Resource
-
 from datetime import datetime
-
-
 
 driver_bp = Blueprint("driver_bp", __name__, url_prefix="/drivers")
 driver_api = Api(driver_bp)
-
-
 
 
 class ProtectedResource(Resource):
@@ -26,11 +21,6 @@ class ProtectedResource(Resource):
         """
         current_user = get_jwt_identity()  
         return {"message": f"Hello, Driver, your ID is {current_user}"}
-
-
-   
-
-
 
 class CheckSession(Resource):
     @jwt_required()
@@ -92,17 +82,13 @@ class Signup(Resource):
             print(new_driver.email)
            
             access_token = create_access_token(identity=new_driver.id, additional_claims={"role": new_driver.role})
-          
-
-          
+             
         except Exception as e:
             db.session.rollback()
             return ({"error": str(e)}), 400
 
         return make_response({"success": "Driver registered successfully","access_token":access_token,"new_driver":new_driver.to_dict()},201)
 
-
-    
 class Login(Resource):
     def post(self):
         data = request.get_json()
