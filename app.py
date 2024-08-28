@@ -4,12 +4,10 @@ from driver import driver_bp
 from customers import customer_bp
 from admin import admin_bp
 
-
 import requests
 from requests.auth import HTTPBasicAuth
 from datetime import datetime
 import base64
-
 
 
 my_endpoint = "https://f0f2-41-80-112-198.ngrok-free.app"
