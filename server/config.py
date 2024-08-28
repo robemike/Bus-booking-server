@@ -12,6 +12,7 @@ from flask_jwt_extended import JWTManager
 from flask import Flask,Blueprint,request,make_response,jsonify
 
 app = Flask(__name__)
+
 CORS(app)
 db=SQLAlchemy()
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URI')
@@ -33,6 +34,9 @@ db.init_app(app)
 
 
 
+@app.route('/')
+def hello():
+    return 'Hello, Customer!'
 #Swagger
 SWAGGER_URL = '/swagger/'  
 API_URL = '/static/swagger.json' 
