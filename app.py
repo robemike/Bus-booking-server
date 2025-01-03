@@ -96,9 +96,7 @@ def handle_exception(e):
 #Routes
     
 #home
-@app.route("/")
-def home():
-    return {"msg":"Welcome to Bus Booking App"}
+
 
 #Customers
 @app.route('/customers', methods=['GET'],endpoint='view_customers')

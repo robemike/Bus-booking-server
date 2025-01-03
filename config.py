@@ -33,10 +33,9 @@ migrate = Migrate(app, db)
 db.init_app(app)
 
 
-
-@app.route('/')
-def hello():
-    return 'Hello, Customer!'
+@app.route("/")
+def home():
+    return {"msg":"Welcome to Bus Booking App"}
 
 #Swagger
 SWAGGER_URL = '/swagger/'  
