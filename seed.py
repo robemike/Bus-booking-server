@@ -64,10 +64,8 @@ def seed_data():
             cost_per_seat=fake.random_int(min=100, max=200),
             number_of_seats=fake.random_int(min=30, max=50),
             route=fake.street_name(),
-            travel_time=time(hour=fake.random_int(min=6, max=22), minute=fake.random_int(min=0, max=59)),  # Random time for travel
-            number_plate=number_plate 
+            travel_time=time(hour=fake.random_int(min=6, max=22), minute=fake.random_int(min=0, max=59))  # Random time for travel 
         )
-        print(f"Creating bus with number_plate: {bus.number_plate}")
         buses.append(bus)
 
     db.session.add_all(buses)
