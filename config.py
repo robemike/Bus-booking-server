@@ -10,20 +10,27 @@ from flask_swagger_ui import get_swaggerui_blueprint
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
 from flask import Flask,Blueprint,request,make_response,jsonify
+from datetime import  timedelta
 
 app = Flask(__name__)
 
 CORS(app)
-db=SQLAlchemy()
+# Configure SQLAlchemy
+db = SQLAlchemy()
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URI')
 # app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///bus_booking.db'
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Configure JWT
 app.config["JWT_SECRET_KEY"] = "fsbdgfnhgvjnvhmvh"+str(
     random.randint(1,1000000000000))
 app.config["SECRET_KEY"] = "JKSRVHJVFBSRDFV"+str(random.randint(1,1000000000000))
 app.config["JWT_BLACKLIST_ENABLED"] = True
 app.config["JWT_BLACKLIST_TOKEN_CHECKS"] = ["access", "refresh"] 
 app.config['JWT_TOKEN_LOCATION']=['headers']
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)  # Adjust as needed
+app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=7)  # Keep refresh tokens valid longer
+
 app.json.compact = False
 jwt = JWTManager(app)
 bcrypt = Bcrypt(app)

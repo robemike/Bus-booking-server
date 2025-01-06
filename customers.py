@@ -55,52 +55,44 @@ class Signup(Resource):
             return {"error": "No input data provided."}, 400
 
         required_fields = [
-            "firstname",
-            "lastname",
-            "email",
-            "password",
-            "phone_number",
-            "id_or_passport",
+            "firstname", "lastname", "email", "password",
+            "phone_number", "id_or_passport"
         ]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
         if missing_fields:
-            return {
-                "error": f"Missing required fields: {', '.join(missing_fields)}"
-            }, 400
+            return {"error": f"Missing required fields: {', '.join(missing_fields)}"}, 400
 
         email = data["email"]
         firstname = data["firstname"]
         lastname = data["lastname"]
-        existing_customer = Customer.query.filter_by(
-            firstname=firstname, lastname=lastname, email=email
-        ).first()
+        existing_customer = Customer.query.filter_by(email=email).first()
 
         if existing_customer:
             return {"error": "Customer already exists."}, 400
 
         try:
-            hashed_password = bcrypt.generate_password_hash(data["password"]).decode(
-                "utf-8"
-            )
+            hashed_password = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
             new_customer = Customer(
                 firstname=firstname,
                 lastname=lastname,
                 email=email,
-                address=data["address"],
+                address=data.get("address"),
                 password=hashed_password,
                 phone_number=data["phone_number"],
                 id_or_passport=data["id_or_passport"],
+                role="customer"
             )
-            
-            
-        except KeyError as e:
-            return {"error": f"Missing required field: {e}"}, 400
-        db.session.add(new_customer)
-        db.session.commit()
-        access_token = create_access_token(identity=new_customer.id, additional_claims={"role": new_customer.role})
+            db.session.add(new_customer)
+            db.session.commit()
 
-        return {"message": "Customer registered successfully","access_token":access_token, "new_customer":new_customer.to_dict()}, 201
+            access_token = create_access_token(identity=new_customer.id, additional_claims={"role": new_customer.role})
+
+            return {"message": "Customer registered successfully", "access_token": access_token, "new_customer": new_customer.to_dict()}, 201
+
+        except Exception as e:
+            db.session.rollback()
+            return {"error": f"An error occurred: {str(e)}"}, 500
 
 
 class Login(Resource):
@@ -110,41 +102,28 @@ class Login(Resource):
         if not data:
             return {"error": "No input data provided."}, 400
 
-        required_fields = [
-            "email",
-            "password"
-        ]
+        required_fields = ["email", "password"]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
         if missing_fields:
-            return {
-                "error": f"Missing required fields: {', '.join(missing_fields)}"
-            }, 400
+            return {"error": f"Missing required fields: {', '.join(missing_fields)}"}, 400
 
-        password = data.get("password")
         user = Customer.query.filter_by(email=data["email"]).first()
 
-        if user and bcrypt.check_password_hash(user.password, password):
+        if user and bcrypt.check_password_hash(user.password, data["password"]):
             access_token = create_access_token(identity=user.id, additional_claims={"role": user.role})
-            refresh_token = create_refresh_token(identity=user.id,additional_claims={"role": user.role} )
-            
-           
-            customer_data = {
-                "id": user.id,
-                "email": user.email,
-                "firstname": user.firstname,
-               
-            }
+            refresh_token = create_refresh_token(identity=user.id, additional_claims={"role": user.role})
+
+            session["user_id"] = user.id  # Store session for persistence
 
             return {
                 "access_token": access_token,
                 "refresh_token": refresh_token,
-                "customer": user.to_dict()
+                "customer": user.to_dict(),
+                "message": "Login successful"
             }, 200
-        else:
-            return {"error": "Invalid login credentials"}, 401
 
-    
+        return {"error": "Invalid login credentials"}, 401
 class ViewBookings(Resource):
     def get(self, customer_id):
         if not customer_id:
